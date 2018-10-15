@@ -47,7 +47,7 @@ for binary in $BINARIES; do
 done
 
 CDATE=$(/bin/date '+%Y-%m-%d__%H-%M')
-SCRIPT="${WORKING_DIR}$(/bin/basename $SCRIPT_SOURCE)"
+SCRIPT="${WORKING_DIR}$(basename $SCRIPT_SOURCE)"
 DOWNLOAD=0
 VALIDATE_TARGET=0
 DRY_RUN=0
