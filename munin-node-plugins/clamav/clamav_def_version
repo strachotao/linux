@@ -1,0 +1,32 @@
+#!/bin/bash
+# -*- sh -*-
+# munin clamav virus definition; version 2018-07-27; strachotao
+
+. $MUNIN_LIBDIR/plugins/plugin.sh
+
+case $1 in
+    config)
+
+        echo "graph_title Stari virovych definic"
+        echo 'graph_args --base 1000 -r --lower-limit 0 --upper-limit 15'
+        echo 'graph_scale no'
+        echo 'graph_vlabel Dnu'
+        echo "graph_category clam-av"
+        echo "graph_info Stari virovych definic ve dnech"
+        echo 'pocetdnu.draw AREA'
+        echo 'pocetdnu.colour ff0000'
+        echo 'pocetdnu.label days'
+        echo 'pocetdnu.warning 3'
+        echo 'pocetdnu.critical 4'
+
+        exit 0
+        ;;
+esac
+
+DATA=$(clamd --version | awk -F'[/]' '{print $3}')
+NOW=$(date '+%Y%m%d')
+BEFORE=$(date -d "${DATA}" '+%Y%m%d')
+
+let DIFF=($(date +%s -d ${NOW})-$(date +%s -d ${BEFORE}))/86400
+
+echo "pocetdnu.value ${DIFF}"
