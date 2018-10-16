@@ -1,0 +1,59 @@
+# ssl munin-node plugin; version 2018-10-12; strachotao
+#
+# hlidani expirace certifikatu
+#
+# nova sajta se prida pomoci items, kde 
+#       url = url webu bez protokolu 
+#       type = je bud "internal" nebo "external"
+#       port = tcp port na kt je https dostupne
+#
+# priklady:
+# - { url: 'axa.cz', type: 'external', port: '443'}
+# - { url: 'esbt1-test', type: 'internal', port: '8443'}
+#
+
+---
+- hosts: all 
+  become: yes
+  vars:
+  vars_files:
+    - sites.yml
+
+  gather_facts: no
+
+  tasks:
+  - name: cleanup obsolete ssl_* files
+    shell: rm -f /etc/munin/plugins/ssl_*
+
+  - name: deploy ssl_ plugin
+    copy: src=ssl_ dest=/usr/share/munin/plugins/ssl_ owner=root group=root mode=0755
+
+  - name: auxiliary directories /etc/munin/plugin-ssl-data-collect
+    file: path=/etc/munin/plugin-ssl-data-collect/data state=directory mode=0755
+
+  - name: deploy data collector munin-plugin-ssl-data-collect.sh
+    copy: src=munin-plugin-ssl-data-collect.sh dest=/etc/munin/plugin-ssl-data-collect/munin-plugin-ssl-data-collect.sh owner=root group=root mode=0755
+
+  - name: add sites to check
+    file: src=/usr/share/munin/plugins/ssl_ dest=/etc/munin/plugins/ssl_{{item.url}}_{{item.port}}_{{item.type}} owner=root group=root state=link
+    notify: munin-node restart
+    with_items:
+    - "{{ sites }}"
+
+  - name: cron job for refreshing expiration values 
+    cron: 
+      name: "check ssl targets for munin-node/ssl"
+      minute: "0"
+      hour: "9,18"
+      job: "/etc/munin/plugin-ssl-data-collect/munin-plugin-ssl-data-collect.sh"
+    notify: crond restart 
+ 
+  - name: gather fresh data using munin-plugin-ssl-data-collect.sh
+    command: /etc/munin/plugin-ssl-data-collect/munin-plugin-ssl-data-collect.sh
+ 
+  handlers:
+  - name: munin-node restart 
+    service: name=munin-node state=restarted enabled=yes
+
+  - name: crond restart
+    service: name=crond state=restarted

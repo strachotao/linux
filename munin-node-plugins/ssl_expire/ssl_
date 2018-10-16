@@ -1,0 +1,29 @@
+#!/bin/bash
+# ssl_ munin plugin; version 2018-07-17; strachotao
+#
+# soubor pluginu se linkuje takto:
+#  ssl_url_port_type napr.: ssl_google.com_443_external
+
+. $MUNIN_LIBDIR/plugins/plugin.sh
+
+DATA_DIR="/etc/munin/plugin-ssl-data-collect/data"
+DATA=${0##*ssl_}
+SITE=$(echo $DATA|cut -d"_" -f1)
+PORT=$(echo $DATA|cut -d"_" -f2)
+TYPE=$(echo $DATA|cut -d"_" -f3)
+
+case $1 in
+    config)
+        echo "graph_title $SITE SSL Expirace certifikatu"
+        echo 'graph_args --base 1000'
+        echo 'graph_vlabel dnu zbyva'
+        echo "graph_category ssl-${TYPE}"
+        echo "graph_info Zbyvajici pocet dnu platnosti certifikatu $SITE"
+        echo 'expire.label dny'
+        print_warning expire
+        print_critical expire
+        exit 0
+        ;;
+esac
+
+echo -n "expire.value " && cat ${DATA_DIR}/${SITE}

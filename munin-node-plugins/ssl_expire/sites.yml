@@ -1,0 +1,13 @@
+# sites config ; version 2018-10-12; strachotao
+# 
+# nova sajta se prida pomoci items, kde
+#        url = url webu bez protokolu
+#        type = je bud "internal" nebo "external"
+#        port = tcp port na kt je https dostupne
+#
+---
+
+sites:
+  - { url: 'strachota.net', type: 'external', port: '443'}
+  - { url: 'google.com', type: 'external', port: '443'}
+  - { url: 'intranet.local', type: 'internal', port: '8443'}
