@@ -1,0 +1,21 @@
+# vim syntaxe pro nginx; verze 2017-06-26; strachotao
+#
+
+---
+- become: yes
+  hosts: all
+  gather_facts: no
+
+  tasks:
+  - file: path=/root/.vim state=directory mode=0750
+
+  - file: path=/root/.vim/syntax state=directory mode=0750
+
+  - file: path=/root/.vim/filetype.vim owner=root group=root mode=0640 state=touch
+
+  - copy: src=nginx.vim dest=/root/.vim/syntax/nginx.vim owner=root group=root mode=0640
+
+  - lineinfile:
+      dest: /root/.vim/filetype.vim
+      line: au BufRead,BufNewFile /etc/nginx/*,/usr/local/nginx/conf/* if &ft == '' | setfiletype nginx | endif
+      state: present
