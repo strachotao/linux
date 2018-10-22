@@ -1,18 +1,72 @@
 #!/bin/bash
-# ssl-sites-watchdog; verze 2018-07-16; strachotao
+# ssl-sites-watchdog; verze 2018-10-22; strachotao
 #
-#  nacte z /etc/munin/plugins/ssl_* seznam URL, na kt.
-#  se pripoji a vypise vystup do .data/${SITE}, tento obsah
-#  si pak ctou pluginy /etc/munin/plugins/ssl_site_port_...
-#
-#  pridavani/ubirani/deploy novych url se resi pres ansible,
+#  pridavani/ubirani novych url se resi pres ansible,
 #   rucne nesahat
-#
-#  pokud nejde certifikat nacist, nastavi se hodnota expirace
-#  na 7, coz bude v muninu vypadat jako critical
 
 SSL_PLUGINS_SOURCE="/etc/munin/plugins/ssl_*"
 DATA_DIR="/etc/munin/plugin-ssl-data-collect/data"
+
+function usage() {
+cat << HELP
+$0 [-d <domena>] [-p <port>] | [-h]
+-d, --debug     nepovinny; zobrazi jen vystup z jedne domeny
+-p, --port      nepovinny; pokud neni definovano, pouzije se 443
+-h, --help      nepovinny; vypise toto info
+
+nacte z /etc/munin/plugins/ssl_* seznam URL, na kt.
+se pripoji a vypise vystup do .data/${SITE}, tento obsah
+si pak ctou pluginy /etc/munin/plugins/ssl_site_port_...
+
+pokud nejde certifikat nacist, nastavi se hodnota expirace
+na 7, coz bude v muninu vypadat jako critical
+
+priklady:
+$0
+$0 -d www.seznam.cz
+$0 -d api.strachota.net -p 8443
+
+pouziti z cronu:
+00 09 * * * ${0}
+HELP
+        exit 1
+}
+
+DEBUG=0
+DEBUG_PORT=443
+
+while [[ $# -gt 0 ]]; do
+        param="$1"
+        shift;
+                case $param in
+                        -d|--debug)
+                                DEBUG=1
+                                DEBUG_DOMAIN=$1
+                                shift
+                                ;;
+                        -p|--port)
+                                DEBUG_PORT=$1
+                                shift
+                                ;;
+                        -h|--help)
+                                usage
+                                shift
+                                ;;
+                        *)
+                                echo "Spatny parametr!"
+                                usage
+                                ;;
+                esac
+done
+
+if [ ${DEBUG} -eq 1 ]; then
+        echo "debug mod: ${DEBUG_DOMAIN}:${DEBUG_PORT}"
+        echo "test portu pomoci nc:  nc -z -v -w5 ${DEBUG_DOMAIN} ${DEBUG_PORT}"
+        nc -z -v -w5 ${DEBUG_DOMAIN} ${DEBUG_PORT} || exit 1
+        echo "nacitam certifikat pomoci openssl:"
+        echo | openssl s_client -servername $DEBUG_DOMAIN -connect ${DEBUG_DOMAIN}:${DEBUG_PORT} 2>/dev/null | openssl x509 -text
+        exit 0
+fi
 
 while read SITE PORT TYPE; do
     [[ "${SITE:0:1}" =~ ^[a-z,A-Z,0-9] ]] && {
