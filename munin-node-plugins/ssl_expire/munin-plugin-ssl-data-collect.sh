@@ -1,5 +1,5 @@
 #!/bin/bash
-# ssl-sites-watchdog; verze 2018-10-22; strachotao
+# ssl-sites-watchdog; verze 2018-10-23; strachotao
 #
 #  pridavani/ubirani novych url se resi pres ansible,
 #   rucne nesahat
@@ -60,6 +60,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ ${DEBUG} -eq 1 ]; then
+		echo "start: $(date '+%Y-%m-%d %H:%M:%S')"
         echo "debug mod: ${DEBUG_DOMAIN}:${DEBUG_PORT}"
         echo "test portu pomoci nc:  nc -z -v -w5 ${DEBUG_DOMAIN} ${DEBUG_PORT}"
         nc -z -v -w5 ${DEBUG_DOMAIN} ${DEBUG_PORT} || exit 1
