@@ -1,11 +1,12 @@
 #!/bin/bash
-# ssl-sites-watchdog; verze 2018-10-23; strachotao
+# ssl-sites-watchdog; verze 2018-11-12; strachotao
 #
 #  pridavani/ubirani novych url se resi pres ansible,
 #   rucne nesahat
 
 SSL_PLUGINS_SOURCE="/etc/munin/plugins/ssl_*"
 DATA_DIR="/etc/munin/plugin-ssl-data-collect/data"
+DAYS_ON_ERROR=7
 
 function usage() {
 cat << HELP
@@ -19,7 +20,7 @@ se pripoji a vypise vystup do .data/${SITE}, tento obsah
 si pak ctou pluginy /etc/munin/plugins/ssl_site_port_...
 
 pokud nejde certifikat nacist, nastavi se hodnota expirace
-na 7, coz bude v muninu vypadat jako critical
+na DAYS_ON_ERROR, coz bude v muninu vypadat jako critical
 
 priklady:
 $0
@@ -71,7 +72,7 @@ fi
 
 while read SITE PORT TYPE; do
     [[ "${SITE:0:1}" =~ ^[a-z,A-Z,0-9] ]] && {
-        days=7
+        days=$DAYS_ON_ERROR
         cat /dev/null > ${DATA_DIR}/${SITE}
         cert=$(echo "" | openssl s_client -CApath /etc/ssl/certs -servername "${SITE}" -connect "${SITE}:${PORT}" 2>/dev/null);
         if [[ "${cert}" = *"-----BEGIN CERTIFICATE-----"* ]]; then
