@@ -39,7 +39,7 @@ done
 
 echo "[$(date)] spoustim iptables a nginx"
 
+service iptables restart
 service nginx start
-service iptables start
 
 echo "[$(date)] konec"
