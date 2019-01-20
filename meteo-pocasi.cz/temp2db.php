@@ -1,37 +1,42 @@
 <?php
+/* vim: set expandtab sw=4 ts=4 sts=4: */
+/**
+ *
+ * temp2db; version 2019-01-23; strachotao
+ * ziska teplotu a srazky z api.meteo-pocasi.cz a ulozi je
+ * do mysql tabulky:
+ *
+ * CREATE TABLE IF NOT EXISTS `weather-history` (
+ *   `ID` int(11) NOT NULL,
+ *   `Date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ *   `Temperature` decimal(4,1) NOT NULL,
+ *   `Precipitation` decimal(4,1) NOT NULL
+ * ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_czech_ci;
+ *
+*/
+
 //error_reporting(E_ALL);
 //ini_set('display_errors', '1');
 
-# temp2db; version 2019-01-23; strachotao
-#  ziska teplotu a srazky z api.meteo-pocasi.cz a ulozi je
-#  do mysql tabulky:
-#
-#  CREATE TABLE IF NOT EXISTS `weather-history` (
-#    `ID` int(11) NOT NULL,
-#    `Date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-#    `Temperature` decimal(4,1) NOT NULL,
-#    `Precipitation` decimal(4,1) NOT NULL
-#  ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_czech_ci;
-
-# pri spusteni napr z cronu, neni potreba vystup
+// pri spusteni napr z cronu, neni potreba vystup
 $debug = false;
 
-# jak maxialne stary muze byt zdrojovy soubor v sekundach, nez se stahne novy
+// jak maxialne stary muze byt zdrojovy soubor v sekundach, nez se stahne novy
 $downfileinterval = "300";
 
-# jak maximalne stara data v minutach zapiseme do databaze
+// jak maximalne stara data v minutach zapiseme do databaze
 $timedatalimit = "15";
 
-# meteo-pocasi api ID
+// meteo-pocasi api ID
 $mpid = "00001c2rYhB94sm47cUGdaFQJAgUB4am7jXPd4GCmSLrK8vSkQi";
 
-# nastaveni mysql
+// nastaveni mysql
 $servername = "localhost";
 $database = "db";
 $username = "writer";
 $password = "passwd";
 
-# zdrojovy soubor xml dat, key key=nazev_souboru a value=url, nemenit
+// zdrojovy soubor xml dat, key key=nazev_souboru a value=url, nemenit
 $files = array(
     "api.xml" => "http://api.meteo-pocasi.cz/api.xml?action=get-meteo-data&client=xml&id=$mpid",  
 );
@@ -54,7 +59,7 @@ $lastcomm = $xml_api_reply->last_communication;
 $lastcommunication = strtotime($lastcomm);
 $meteostatus = $xml_api_reply->status;
 
-foreach ($xml_api_reply->input->sensor as $sensor){
+foreach ($xml_api_reply->input->sensor as $sensor) {
     if ($sensor->type == "temperature") {
         $temperature = $sensor->value;
     }
