@@ -2,26 +2,27 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  *
- * temp2db; version 2019-01-23; strachotao
- * ziska teplotu a srazky z api.meteo-pocasi.cz a ulozi je
+ * temp2db; version 2019-01-24; strachotao
+ * ziska teplotu, srazky a vlhkost z api.meteo-pocasi.cz a ulozi je
  * do mysql tabulky:
- *
+ * 
  * CREATE TABLE IF NOT EXISTS `weather-history` (
  *   `ID` int(11) NOT NULL,
  *   `Date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
  *   `Temperature` decimal(4,1) NOT NULL,
- *   `Precipitation` decimal(4,1) NOT NULL
- * ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_czech_ci;
+ *   `Precipitation` decimal(4,1) NOT NULL,
+ *   `Humidity` tinyint(2) NOT NULL
+ * ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_czech_ci;
  *
 */
 
 //error_reporting(E_ALL);
 //ini_set('display_errors', '1');
 
-// pri spusteni napr z cronu, neni potreba vystup
+// pri spusteni z cronu, neni potreba vystup
 $debug = false;
 
-// jak maxialne stary muze byt zdrojovy soubor v sekundach, nez se stahne novy
+// jak maximalne stary muze byt zdrojovy soubor v sekundach, nez se stahne novy
 $downfileinterval = "300";
 
 // jak maximalne stara data v minutach zapiseme do databaze
@@ -66,6 +67,9 @@ foreach ($xml_api_reply->input->sensor as $sensor) {
     if ($sensor->type == "precipitation") {
         $precipitation = $sensor->value;
     }
+    if ($sensor->type == "humidity") {
+        $humidity = $sensor->value;
+    }
 }
 
 if ($debug) {
@@ -73,6 +77,7 @@ if ($debug) {
     echo "Status stanice: $meteostatus<br>";
     echo "Teplota: $temperature<br>";
     echo "Srazky: $precipitation<br>";
+    echo "Vlhkost: $humidity<br>";
 }
 
 if (time() - $lastcommunication < $timedatalimit * 60) {
@@ -81,7 +86,7 @@ if (time() - $lastcommunication < $timedatalimit * 60) {
         die("Pripojeni do db selhalo: " . mysqli_connect_error());
     }
     if ($debug) {echo "Pripojeni do databaze je v poradku<br>";}
-    $sql = "INSERT INTO `weather-history` (temperature, precipitation) VALUES ('$temperature', '$precipitation')";
+    $sql = "INSERT INTO `weather-history` (temperature, precipitation, humidity) VALUES ('$temperature', '$precipitation', '$humidity')";
     if (mysqli_query($conn, $sql)) {
         if ($debug) {echo "Data byla zapsana do databaze<br>";}
     } else {
