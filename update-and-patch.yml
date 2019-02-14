@@ -1,0 +1,53 @@
+# update-and-patch.yml; version 2019-02-14; strachotao
+#  playbook na upgrade jadra + sys balicku
+#  promenne kernel jsou cilove hodnoty po upgrade, jako staticka promenna
+#  se musi rucne prepsat, aby odpovidala aktualnim verzim
+#
+#  TODO: rozsirit pro Ubuntu LTS 
+
+---
+- hosts: *
+  become: yes
+  gather_facts: yes
+
+  vars:
+    kernel:
+      - 2.6.32-754.10.1.el6.i686
+      - 2.6.32-754.10.1.el6.x86_64
+      - 3.10.0-957.5.1.el7.x86_64
+
+  tasks:
+    - name: update the system
+      yum:
+        name: "*"
+        state: latest
+        exclude: munin*
+        disablerepo: "el6*,el7*,pg*,ngin*,docker*,remi*"
+        disable_gpg_check: yes
+      register: updated_by_yum
+      when: ansible_pkg_mgr == "yum"
+
+    - name: restart system to reboot to newest kernel
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
+      when: updated_by_yum.changed
+
+    - name: wait for 30 seconds
+      pause: seconds=30
+      when: updated_by_yum.changed
+
+    - name: wait for the system to reboot
+      wait_for_connection:
+        connect_timeout: 30
+        sleep: 5
+        delay: 5
+        timeout: 80
+      when: updated_by_yum.changed
+
+    - name: collect fact about the current kernel
+      setup:
+
+    - fail:
+        msg: kernel update required!
+      when: ansible_kernel not in kernel
