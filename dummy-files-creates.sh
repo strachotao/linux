@@ -1,5 +1,6 @@
 #!/bin/bash
 # bulk dummy files; version 2018-01-17; strachotao
+#   TODO:
 
 usage() {
 	echo "Usage: $0 {size in MB} [size in MB] ... [size in MB]"
