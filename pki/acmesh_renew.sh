@@ -15,6 +15,10 @@ echo "[$(date)] start..."
 for item in "$@"; do
         if [ ! -d "/root/.acme.sh/$item" ]; then
                 echo "[$(date)] domena $item neni na tomto serveru nakonfigurovana"
+                echo "spustte napr.:"
+                echo " service httpd stop; service nginx stop"
+                echo " ./acme.sh -d $item --issue --standalone --usewget"
+                echo " service httpd start; service nginx start"
         else
                 domains+=" $item"
         fi
