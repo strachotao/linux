@@ -1,5 +1,5 @@
 #!/bin/bash
-# acmesh_renew; version 2019-03-22; strachotao
+# acmesh_renew; version 2019-05-27; strachotao
 #  velmi jednoucelove pro RENEW lets encrypt certifikatu, na boxu kde mame iptables+nginx+acme.sh
 #	
 
