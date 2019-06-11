@@ -1,0 +1,51 @@
+# sshd-hardening.yml; verze 2019-06-12; strachotao
+#
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    sshd_config_file: /etc/ssh/sshd_config
+    sshd_options:
+      PasswordAuthentication: {name: PasswordAuthentication, val: "no"}
+      PermitRootLogin: {name: PermitRootLogin, val: "no"}
+      ChallengeResponseAuthenticatio: {name: ChallengeResponseAuthentication, val: "no"}
+      PermitEmptyPasswords: {name: PermitEmptyPasswords, val: "no"}
+      X11Forwarding: {name: X11Forwarding, val: "no"}
+      UseDNS: {name: UseDNS, val: "no"}
+
+  tasks:
+
+  - name: "zazalohovani sshd configu"
+    synchronize:
+      src: "{{ sshd_config_file }}"
+      dest: "{{ sshd_config_file }}.bak"
+    delegate_to: "{{ inventory_hostname }}"
+
+  - name: "cisteni stareho nastaveni sshd demona"
+    lineinfile:
+      dest: "{{ sshd_config_file }}"
+      regexp: '(?i)^{{ item.value.name }} '
+      state: absent
+      backup: no
+    with_dict:
+      - "{{ sshd_options }}"
+
+  - name: "nastaveni pozadovanych bezpecnostnich polozek"
+    lineinfile:
+      dest: "{{ sshd_config_file }}"
+      line: '{{ item.value.name }} {{ item.value.val }}'
+      state: present
+      create: true
+      insertafter: '(?i)^UsePAM'
+      validate: '/usr/sbin/sshd -T -f %s'
+    with_dict:
+      - "{{ sshd_options }}"
+
+  - name: "restart ssh RedHat"
+    service: name=sshd state=reloaded
+    when: ansible_os_family == "RedHat"
+
+  - name: "restart ssh Debian/Ubuntu"
+    service: name=ssh state=reloaded
+    when: ansible_os_family == "Debian" or ansible_os_family == "Ubuntu"
