@@ -54,7 +54,7 @@ do
         echo "SSLCertificateKeyFile /etc/pki/tls/private/${item}.key"
         echo "SSLCACertificateFile /etc/pki/tls/certs/digicert-thawte-int.cer"
         echo
-        echo "konfigurace ngixn:"
+        echo "konfigurace nginx:"
         echo "ssl_certificate /etc/nginx/pki/${item}.cer;"
         echo "ssl_certificate_key /etc/nginx/pki/${item}.key;"
         echo
