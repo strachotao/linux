@@ -1,0 +1,81 @@
+# sysprep; version 2019-11-29; oldrich.strachota@axa.cz
+#
+# sysprep pro centos7+
+# provede:
+#  - nastaveni sitove karty
+#    pokud neni nastaveny newip, neprovede zmenu tcp/ip a pokracuje dal
+#  - nastaveni hostname
+#    pokud neni nastaveny newname, jmeno zustane a pokracuje dal
+#  - smaze rsa klice (po bootu si ssh vygeneruje nove)
+#  - nastavi barvu promptu roota (cervena=31 zelena=32 oranzova=33 modra=34);
+#    pokud neni nastaveny promptcolor, preskoci a pokracuje dal
+#  - reboot
+#
+# USAGE:
+#  ansible-playbook -l srv210 -e 'newip=192.168.0.215 newmask=255.255.255.0 newgw=192.168.0.1 newdns1=192.168.0.1 newname=srv215 promptcolor=31 reboot=true nicname=enp0s3' sysprep.yml
+
+---
+- become: yes
+  hosts: srv210 
+  gather_facts: True
+
+  tasks:
+
+  - name: remove current ifcfg
+    file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }} state=absent
+    when: newip is defined
+
+  - name: touch ifcfg
+    file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }}  mode=0644 owner=root group=root state=touch
+    when: newip is defined
+
+  - name: deploy ifcfg NIC
+    blockinfile:
+      path: /etc/sysconfig/network-scripts/ifcfg-{{ nicname }}
+      owner: root
+      group: root
+      mode: 0644
+      block: |
+        TYPE=Ethernet
+        PROXY_METHOD=none
+        BROWSER_ONLY=no
+        BOOTPROTO=none
+        IPADDR={{ newip }}
+        NETMASK={{ newmask }}
+        GATEWAY={{ newgw }}
+        DNS1={{ newdns1 }}
+        DEFROUTE=yes
+        IPV4_FAILURE_FATAL=no
+        NAME={{ nicname }}
+        DEVICE={{ nicname }}
+        ONBOOT=yes
+    when: newip is defined
+
+  - name: remove current hostname
+    file: path=/etc/hostname state=absent
+    when: newname is defined
+
+  - name: touch hostname
+    file: path=/etc/hostname mode=0644 owner=root group=root state=touch
+    when: newname is defined
+
+  - name: deploy hostname
+    lineinfile:
+      path: /etc/hostname
+      line: "{{ newname }}"
+    when: newname is defined
+
+  - name: refresh ssh daemon
+    shell: 'rm -v /etc/ssh/ssh_host_*'
+    when: newip is defined
+
+  - name: set marker in prompt
+    blockinfile:
+      path: /root/.bash_profile
+      block: |
+        export PS1='\[\e[0;{{ promptcolor }}m\]\u@\h \W\[\e[m\] \$ '
+    when: promptcolor is defined
+
+  - name: send reboot
+    command: init 6
+    when: reboot is defined
