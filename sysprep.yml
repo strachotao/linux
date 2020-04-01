@@ -1,4 +1,4 @@
-# sysprep; version 2019-11-29; oldrich.strachota@axa.cz
+# sysprep; version 2020-04-02; strachotao 
 #
 # sysprep pro centos7+
 # provede:
@@ -77,5 +77,5 @@
     when: promptcolor is defined
 
   - name: send reboot
-    command: init 6
+    reboot: 
     when: reboot is defined
