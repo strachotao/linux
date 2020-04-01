@@ -16,7 +16,7 @@
 
 ---
 - become: yes
-  hosts: srv210 
+  hosts: all 
   gather_facts: True
 
   tasks:
@@ -77,5 +77,5 @@
     when: promptcolor is defined
 
   - name: send reboot
-    reboot: 
+    command: init 6 
     when: reboot is defined
