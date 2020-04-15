@@ -109,7 +109,7 @@
       path: /root/.profile
       block: |
         export PS1='\[\e[0;{{ promptcolor }}m\]\u@\h \W\[\e[m\] \$ '
-    when: promptcolor is defined and ansible_distribution == "RedHat"
+    when: promptcolor is defined and ansible_distribution == "Ubuntu"
 
   - name: send reboot
     command: init 6 
