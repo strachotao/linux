@@ -1,18 +1,18 @@
-# sysprep; version 2020-04-02; strachotao 
+# sysprep; version 2020-04-15; strachotao 
 #
-# sysprep pro centos7+
+# sysprep pro centos7+ a ubuntu 18.04
 # provede:
 #  - nastaveni sitove karty
 #    pokud neni nastaveny newip, neprovede zmenu tcp/ip a pokracuje dal
 #  - nastaveni hostname
 #    pokud neni nastaveny newname, jmeno zustane a pokracuje dal
 #  - smaze rsa klice (po bootu si ssh vygeneruje nove)
-#  - nastavi barvu promptu roota (cervena=31 zelena=32 oranzova=33 modra=34);
+#  - nastavi barvu promptu roota (cervena=31 zelena=32 oranzova=33 modra=34 sediva=37)
 #    pokud neni nastaveny promptcolor, preskoci a pokracuje dal
 #  - reboot
 #
 # USAGE:
-#  ansible-playbook -l srv210 -e 'newip=192.168.0.215 newmask=255.255.255.0 newgw=192.168.0.1 newdns1=192.168.0.1 newname=srv215 promptcolor=31 reboot=true nicname=enp0s3' sysprep.yml
+#  ansible-playbook -l se89 -e 'newip=192.168.0.83 newmask=255.255.255.0 newcidr=24 newgw=192.168.0.1 newdns1=192.168.0.1 newname=se92 promptcolor=37 reboot=true nicname=enp0s3' sysprep.yml
 
 ---
 - become: yes
@@ -23,11 +23,11 @@
 
   - name: remove current ifcfg
     file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }} state=absent
-    when: newip is defined
+    when: newip is defined and ansible_distribution == "RedHat"
 
   - name: touch ifcfg
     file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }}  mode=0644 owner=root group=root state=touch
-    when: newip is defined
+    when: newip is defined and ansible_distribution == "RedHat"
 
   - name: deploy ifcfg NIC
     blockinfile:
@@ -49,7 +49,35 @@
         NAME={{ nicname }}
         DEVICE={{ nicname }}
         ONBOOT=yes
-    when: newip is defined
+    when: newip is defined and ansible_distribution == "RedHat"
+
+  - name: remove current netplan
+    file: path=/etc/netplan/01-netcfg.yaml state=absent
+    when: newip is defined and ansible_distribution == 'Ubuntu'
+
+  - name: touch netplan
+    file: path=/etc/netplan/01-netcfg.yaml mode=0644 owner=root group=root state=touch
+    when: newip is defined and ansible_distribution == 'Ubuntu'
+
+  - name: deploy netplan
+    blockinfile:
+      path: /etc/netplan/01-netcfg.yaml
+      block: |
+        # netplan; version {{ lookup('pipe','date +%Y-%m-%d') }}; strachotao
+        # This file describes the network interfaces available on your system
+        # For more information, see netplan(5).
+        network:
+          version: 2
+          renderer: networkd
+          ethernets:
+            enp0s3:
+              addresses: [ {{ newip }}/{{ newcidr }} ]
+              gateway4: {{ newgw }}
+              nameservers:
+                search: [ ubuntu ]
+                addresses:
+                    - "{{ newdns1 }}"
+    when: newip is defined and ansible_distribution == 'Ubuntu'
 
   - name: remove current hostname
     file: path=/etc/hostname state=absent
@@ -67,14 +95,21 @@
 
   - name: refresh ssh daemon
     shell: 'rm -v /etc/ssh/ssh_host_*'
-    when: newip is defined
+    when: newip is defined and ansible_distribution == "RedHat"
 
   - name: set marker in prompt
     blockinfile:
       path: /root/.bash_profile
       block: |
         export PS1='\[\e[0;{{ promptcolor }}m\]\u@\h \W\[\e[m\] \$ '
-    when: promptcolor is defined
+    when: promptcolor is defined and ansible_distribution == "RedHat"
+
+  - name: set marker in prompt
+    blockinfile:
+      path: /root/.profile
+      block: |
+        export PS1='\[\e[0;{{ promptcolor }}m\]\u@\h \W\[\e[m\] \$ '
+    when: promptcolor is defined and ansible_distribution == "RedHat"
 
   - name: send reboot
     command: init 6 
