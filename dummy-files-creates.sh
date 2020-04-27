@@ -8,7 +8,7 @@ usage() {
 	echo "Examples: $0 100"
 	echo "          $0 10 10 10 10"
 	echo
-	echo "Desc: creates a sparse file(s) which does not have any real data"
+	echo "Desc: creates a dummy file(s) which does not have any real data"
 	echo "Output name format: dummyfile-$(echo `date '+%Y-%m-%d--%H:%M:%S:%N'`)"
 	exit 1
 }
