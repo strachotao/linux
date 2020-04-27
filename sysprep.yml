@@ -1,4 +1,4 @@
-# sysprep; version 2020-04-15; strachotao 
+# sysprep; version 2020-04-27; strachotao 
 #
 # sysprep pro centos7+ a ubuntu 18.04
 # provede:
@@ -23,11 +23,11 @@
 
   - name: remove current ifcfg
     file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }} state=absent
-    when: newip is defined and ansible_distribution == "RedHat"
+    when: newip is defined and ansible_os_family == "RedHat"
 
   - name: touch ifcfg
     file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }}  mode=0644 owner=root group=root state=touch
-    when: newip is defined and ansible_distribution == "RedHat"
+    when: newip is defined and ansible_os_family == "RedHat"
 
   - name: deploy ifcfg NIC
     blockinfile:
@@ -49,15 +49,15 @@
         NAME={{ nicname }}
         DEVICE={{ nicname }}
         ONBOOT=yes
-    when: newip is defined and ansible_distribution == "RedHat"
+    when: newip is defined and ansible_os_family == "RedHat"
 
   - name: remove current netplan
     file: path=/etc/netplan/01-netcfg.yaml state=absent
-    when: newip is defined and ansible_distribution == 'Ubuntu'
+    when: newip is defined and ansible_os_family == 'Debian'
 
   - name: touch netplan
     file: path=/etc/netplan/01-netcfg.yaml mode=0644 owner=root group=root state=touch
-    when: newip is defined and ansible_distribution == 'Ubuntu'
+    when: newip is defined and ansible_os_family == 'Debian'
 
   - name: deploy netplan
     blockinfile:
@@ -74,10 +74,10 @@
               addresses: [ {{ newip }}/{{ newcidr }} ]
               gateway4: {{ newgw }}
               nameservers:
-                search: [ ubuntu ]
+                search: [ Debian ]
                 addresses:
                     - "{{ newdns1 }}"
-    when: newip is defined and ansible_distribution == 'Ubuntu'
+    when: newip is defined and ansible_os_family == 'Debian'
 
   - name: remove current hostname
     file: path=/etc/hostname state=absent
@@ -95,21 +95,21 @@
 
   - name: refresh ssh daemon
     shell: 'rm -v /etc/ssh/ssh_host_*'
-    when: newip is defined and ansible_distribution == "RedHat"
+    when: newip is defined and ansible_os_family == "RedHat"
 
   - name: set marker in prompt
     blockinfile:
       path: /root/.bash_profile
       block: |
         export PS1='\[\e[0;{{ promptcolor }}m\]\u@\h \W\[\e[m\] \$ '
-    when: promptcolor is defined and ansible_distribution == "RedHat"
+    when: promptcolor is defined and ansible_os_family == "RedHat"
 
   - name: set marker in prompt
     blockinfile:
       path: /root/.profile
       block: |
         export PS1='\[\e[0;{{ promptcolor }}m\]\u@\h \W\[\e[m\] \$ '
-    when: promptcolor is defined and ansible_distribution == "Ubuntu"
+    when: promptcolor is defined and ansible_os_family == "Debian"
 
   - name: send reboot
     command: init 6 
