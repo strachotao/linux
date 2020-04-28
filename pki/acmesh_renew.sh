@@ -1,5 +1,5 @@
 #!/bin/bash
-# acmesh_renew; version 2019-05-27; strachotao
+# acmesh_renew; version 2020-04-29; strachotao
 #  velmi jednoucelove pro RENEW lets encrypt certifikatu, na boxu kde mame iptables+nginx+acme.sh
 #	
 
@@ -17,7 +17,7 @@ for item in "$@"; do
                 echo "[$(date)] domena $item neni na tomto serveru nakonfigurovana"
                 echo "spustte napr.:"
                 echo " service iptables stop; service nginx stop"
-                echo " ./acme.sh -d $item --issue --standalone --use-wget"
+                echo " ./acme.sh -d $item --issue --standalone --use-wget --insecure"
                 echo " service iptables start; service nginx start"
         else
                 domains+=" $item"
@@ -37,7 +37,7 @@ service nginx stop
 cd /root/.acme.sh/
 for domain in $domains; do
         echo "[$(date)] spoustim renew pro $domain"
-        ./acme.sh -d $domain --renew --standalone --use-wget
+        ./acme.sh -d $domain --renew --standalone --use-wget --insecure
         echo "[$(date)] renew $domain je hotovy"
 done
 
