@@ -1,4 +1,6 @@
-# sysprep; version 2020-04-27; strachotao 
+# sysprep; version 2020-05-07; strachotao 
+# USAGE:
+#  ansible-playbook -l se89 -e 'newip=192.168.0.83 newmask=255.255.255.0 newcidr=24 newgw=192.168.0.1 newdns1=192.168.0.1 newname=se92 promptcolor=37 reboot=true nicname=enp0s3' sysprep.yml
 #
 # sysprep pro centos7+ a ubuntu 18.04
 # provede:
@@ -11,9 +13,6 @@
 #    pokud neni nastaveny promptcolor, preskoci a pokracuje dal
 #  - reboot
 #
-# USAGE:
-#  ansible-playbook -l se89 -e 'newip=192.168.0.83 newmask=255.255.255.0 newcidr=24 newgw=192.168.0.1 newdns1=192.168.0.1 newname=se92 promptcolor=37 reboot=true nicname=enp0s3' sysprep.yml
-
 ---
 - become: yes
   hosts: all 
@@ -112,5 +111,6 @@
     when: promptcolor is defined and ansible_os_family == "Debian"
 
   - name: send reboot
+    ignore_errors: True
     command: init 6 
     when: reboot is defined
