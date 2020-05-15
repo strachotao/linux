@@ -1,5 +1,8 @@
 #!/bin/bash
-# youtube-audio-grab.sh; verze 2020-05-13; strachotao
+# youtube-audio-grab.sh; verze 2020-05-15; strachotao
+#  youtube id videa jsou v 64kove soustave
+#  
+#  do TARGET_FOLDER vygrabuje audio (mp3) z youtube videa
 
 TARGET_FOLDER="/var/www/html/emg52"
 
