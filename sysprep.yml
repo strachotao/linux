@@ -1,6 +1,6 @@
-# sysprep; version 2020-05-07; strachotao 
+# sysprep; version 2020-05-14; strachotao 
 # USAGE:
-#  ansible-playbook -l se89 -e 'newip=192.168.0.83 newmask=255.255.255.0 newcidr=24 newgw=192.168.0.1 newdns1=192.168.0.1 newname=se92 promptcolor=37 reboot=true nicname=enp0s3' sysprep.yml
+#  ansible-playbook -l se89 -e 'newip=192.168.0.83 newmask=255.255.255.0 newcidr=24 newgw=192.168.0.1 newdns1=192.168.0.1 newname=se92 promptcolor=37 reboot=true nicname=enp0s3 deployhosts=true' sysprep.yml
 #
 # sysprep pro centos7+ a ubuntu 18.04
 # provede:
@@ -95,6 +95,10 @@
   - name: refresh ssh daemon
     shell: 'rm -v /etc/ssh/ssh_host_*'
     when: newip is defined and ansible_os_family == "RedHat"
+
+  - name: deploy /etc/hosts
+    copy: src=/etc/hosts dest=/etc/hosts
+    when: deployhosts is defined
 
   - name: set marker in prompt
     blockinfile:
