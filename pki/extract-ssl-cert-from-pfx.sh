@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# extract-ssl-cert-from-pfx.sh; verze 2018-10-01; strachotao 
+# extract-ssl-cert-from-pfx.sh; verze 2020-05-23; strachotao 
 #
-#  v poli pfx je: ["soubor.pfx"]="hesloklice"
+#  v poli pfx je: ["soubor-certifikatu-a-klice.pfx"]="hesloklice"
 
 declare -A pfx=(
+        ["strachota.eu.pfx"]="heslo"
         ["strachota.net.pfx"]="heslo"
-        ["example.com.pfx"]="heslo"
 )
 
 DELIMITER=$(printf '%46s\n' | tr ' ' =)
@@ -23,11 +23,14 @@ do
                 echo -e "K ${item} nemame spravne heslo!\n${DELIMITER}"
                 continue
         fi
-
+	echo "Heslo...OK"
         echo "Exportuji..."
 
-        openssl pkcs12 -in ${item} -clcerts -nokeys -out ${item}.cer -passin pass:"${pfx["$item"]}"
-        openssl pkcs12 -in ${item} -nocerts -nodes  -out ${item}.enc.key -passin pass:"${pfx["$item"]}"
+	filen="$item"
+	item=$(sed 's/\.pfx//' <<< ${item})
+
+        openssl pkcs12 -in ${filen} -clcerts -nokeys -out ${item}.cer -passin pass:"${pfx["$filen"]}"
+        openssl pkcs12 -in ${filen} -nocerts -nodes  -out ${item}.enc.key -passin pass:"${pfx["$filen"]}"
         openssl rsa -in ${item}.enc.key -out ${item}.key
         rm -f ${item}.enc.key
 
