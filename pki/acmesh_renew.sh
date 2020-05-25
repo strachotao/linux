@@ -1,5 +1,5 @@
 #!/bin/bash
-# acmesh_renew; version 2020-04-29; strachotao
+# acmesh_renew; version 2020-05-26; strachotao
 #  velmi jednoucelove pro RENEW lets encrypt certifikatu, na boxu kde mame iptables+nginx+acme.sh
 #	
 
@@ -7,6 +7,11 @@ if [ $# -lt 1 ]; then
         echo "usage: $0 {domain1} [domain2] [domain...]"
         echo "example1: $0 domain.com"
         echo "example2: $0 domain.com domain.net"
+	if [ -f /root/.acme.sh/acme.sh ]; then
+		echo
+		echo "seznam domen spravovanych acme:"
+		/root/.acme.sh/acme.sh --list
+	fi
         exit 1
 fi
 
