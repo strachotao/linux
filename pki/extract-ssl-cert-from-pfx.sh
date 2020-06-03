@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# extract-ssl-cert-from-pfx.sh; verze 2020-05-23; strachotao 
+# extract-ssl-cert-from-pfx.sh; verze 2020-06-03; strachotao 
 #
 #  v poli pfx je: ["soubor-certifikatu-a-klice.pfx"]="hesloklice"
 
@@ -10,24 +10,39 @@ declare -A pfx=(
 )
 
 DELIMITER=$(printf '%46s\n' | tr ' ' =)
+debug=true
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -p | --process )  debug=false;;
+    esac
+    shift
+done
+
+echo -e "pouziti: $0 -p [--process]\n         -p provede zpracovani, bez tohoto parametru pouze zobrazi stav"
+echo -e "$DELIMITER"
 
 for item in "${!pfx[@]}";
 do
         echo "Start ${item}"
         if [ ! -f ${item} ]; then
-                echo -e "Zdrojovy soubor ${item} nelze precist!\n${DELIMITER}"
+		echo -e "$(tput setaf 1)Zdrojovy soubor ${item} nelze precist!$(tput sgr0)\n${DELIMITER}"
                 continue
         fi
         openssl pkcs12 -in ${item} -noout -passin pass:"${pfx["$item"]}"
         if [ $? -eq 1 ]; then
-                echo -e "K ${item} nemame spravne heslo!\n${DELIMITER}"
+                echo -e "$(tput setaf 1)${item} nemame spravne heslo!$(tput sgr0)\n${DELIMITER}"
                 continue
         fi
-	echo "Heslo...OK"
+        echo -e "$(tput setaf 2)${item} heslo OK$(tput sgr0)"
+        if [[ $debug == true ]]; then
+                echo -e "$DELIMITER"
+                continue
+        fi
         echo "Exportuji..."
 
-	filen="$item"
-	item=$(sed 's/\.pfx//' <<< ${item})
+        filen="$item"
+        item=$(sed 's/\.pfx//' <<< ${item})
 
         openssl pkcs12 -in ${filen} -clcerts -nokeys -out ${item}.cer -passin pass:"${pfx["$filen"]}"
         openssl pkcs12 -in ${filen} -nocerts -nodes  -out ${item}.enc.key -passin pass:"${pfx["$filen"]}"
