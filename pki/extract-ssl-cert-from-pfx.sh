@@ -12,21 +12,26 @@ declare -A pfx=(
 DELIMITER=$(printf '%46s\n' | tr ' ' =)
 debug=true
 
-while [ "$1" != "" ]; do
-    case $1 in
-        -p | --process )  debug=false;;
+while [[ $# -gt 0 ]]; do
+	param="$1"
+	shift;
+    case $param in
+		-f|--intmfil)	intmfil="$1";shift;;
+		-p|--process)	debug=false;;
+		*) echo "Spatny parametr!";;
     esac
-    shift
 done
 
-echo -e "pouziti: $0 -p [--process]\n         -p provede zpracovani, bez tohoto parametru pouze zobrazi stav"
+echo "pouziti: $0 [-p] [--process] [-f] [--intmfil]"
+echo "    -p provede zpracovani, bez tohoto parametru pouze zobrazi stav"
+echo "    -f soubor intermediate certfikatu, jehoz obsah bude pridan do souboru certifikatu (vyhodne u nginx)"
 echo -e "$DELIMITER"
 
 for item in "${!pfx[@]}";
 do
-        echo "Start ${item}"
+		echo "Start ${item}"
         if [ ! -f ${item} ]; then
-		echo -e "$(tput setaf 1)Zdrojovy soubor ${item} nelze precist!$(tput sgr0)\n${DELIMITER}"
+				echo -e "$(tput setaf 1)Zdrojovy soubor ${item} nelze precist!$(tput sgr0)\n${DELIMITER}"
                 continue
         fi
         openssl pkcs12 -in ${item} -noout -passin pass:"${pfx["$item"]}"
@@ -39,7 +44,13 @@ do
                 echo -e "$DELIMITER"
                 continue
         fi
-        echo "Exportuji..."
+		if [[ ! -f ${intmfil} ]]; then
+				echo -e "$(tput setaf 1)Zdrojovy soubor intm. certifikatu ${intmfil} nelze precist!$(tput sgr0)\n${DELIMITER}"
+                continue
+		fi
+
+
+		echo "Exportuji..."
 
         filen="$item"
         item=$(sed 's/\.pfx//' <<< ${item})
@@ -48,6 +59,8 @@ do
         openssl pkcs12 -in ${filen} -nocerts -nodes  -out ${item}.enc.key -passin pass:"${pfx["$filen"]}"
         openssl rsa -in ${item}.enc.key -out ${item}.key
         rm -f ${item}.enc.key
+
+		cat ${intmfil} >> ${item}.cer
 
         read -p "Zkopirovat klice ${item} do /etc/pki/tls/certs|private...? (y/n)" -n 1 -r
         echo
