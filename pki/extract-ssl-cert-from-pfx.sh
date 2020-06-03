@@ -27,6 +27,11 @@ echo "    -p provede zpracovani, bez tohoto parametru pouze zobrazi stav"
 echo "    -f soubor intermediate certfikatu, jehoz obsah bude pridan do souboru certifikatu (vyhodne u nginx)"
 echo -e "$DELIMITER"
 
+if [[ -n ${intmfil} && ! -f ${intmfil} ]]; then
+	echo -e "$(tput setaf 1)Zdrojovy soubor intm. certifikatu ${intmfil} nelze precist!$(tput sgr0)\n${DELIMITER}"
+	exit 1	
+fi
+
 for item in "${!pfx[@]}";
 do
 		echo "Start ${item}"
@@ -44,11 +49,6 @@ do
                 echo -e "$DELIMITER"
                 continue
         fi
-		if [[ ! -f ${intmfil} ]]; then
-				echo -e "$(tput setaf 1)Zdrojovy soubor intm. certifikatu ${intmfil} nelze precist!$(tput sgr0)\n${DELIMITER}"
-                continue
-		fi
-
 
 		echo "Exportuji..."
 
@@ -60,7 +60,9 @@ do
         openssl rsa -in ${item}.enc.key -out ${item}.key
         rm -f ${item}.enc.key
 
+	if [[ -n ${intmfil} ]]; then
 		cat ${intmfil} >> ${item}.cer
+	fi
 
         read -p "Zkopirovat klice ${item} do /etc/pki/tls/certs|private...? (y/n)" -n 1 -r
         echo
