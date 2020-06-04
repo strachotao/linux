@@ -1,0 +1,32 @@
+# hw-info.yml; version 2020-06-05; strachotao
+#
+#   vygeneruje hw-info.csv 
+#   
+#   nutne spustit s logovanim do hw-info.log:
+#   ansible-playbook hw-info.yml > hw-info.log 2>&1
+
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+
+  tasks:
+
+    - name: deploy
+      copy: src=hw-info.sh dest=/root owner=root group=root mode=0700
+
+    - name: run
+      command: /root/hw-info.sh
+      register: run
+
+    - debug: msg="{{ run.stdout }}"
+
+    - name: generate csv
+      shell: grep serverhw hw-info.log | awk '{print $2}' | sed 's/\"//g'|sed 's/serverhw,//g' > hw-info.csv
+      delegate_to: localhost
+      run_once: yes
+
+    - name: add csv header
+      shell: sed -i '1i hostname,cpu,ram(M),san(G)' hw-info.csv
+      delegate_to: localhost
+      run_once: yes

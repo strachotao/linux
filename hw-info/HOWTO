@@ -1,0 +1,1 @@
+ansible-playbook hw-info.yml > hw-info.log 2>&1
