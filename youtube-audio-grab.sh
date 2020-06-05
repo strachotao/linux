@@ -5,6 +5,8 @@
 #  do TARGET_FOLDER vygrabuje audio (mp3) z youtube videa
 #
 #  dalsi priklady: youtube-dl -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' --restrict-filenames $video
+#
+#   https://github.com/ytdl-org/youtube-dl
 
 TARGET_FOLDER="/var/www/html/emg52"
 
