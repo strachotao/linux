@@ -3,6 +3,8 @@
 #  youtube id videa jsou v 64kove soustave
 #  
 #  do TARGET_FOLDER vygrabuje audio (mp3) z youtube videa
+#
+#  dalsi priklady: youtube-dl -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' --restrict-filenames $video
 
 TARGET_FOLDER="/var/www/html/emg52"
 
