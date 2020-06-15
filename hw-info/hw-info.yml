@@ -1,32 +1,35 @@
-# hw-info.yml; version 2020-06-05; strachotao
+# hw-info.yml; version 2020-06-15; strachotao
 #
-#   vygeneruje hw-info.csv 
-#   
+#   vygeneruje hw-info.csv s informace o systemu; playbook neprovadi
+#     zadny zmeny, pouze ziskava informace
+#
 #   nutne spustit s logovanim do hw-info.log:
-#   ansible-playbook hw-info.yml > hw-info.log 2>&1
+#     ansible-playbook hw-info.yml -e 'csv_gen=true' > hw-info.log 2>&1
+#
+#   ziskana data
+#   hostname,cpu,vcpu,arch,ram(M),swap(M),san(G),family,distro,ver,kernel,tz,pkg,service,ipv4all,vendor,role,type
 
 ---
 - hosts: all
   become: yes
-  gather_facts: no
+  gather_facts: yes
 
   tasks:
 
-    - name: deploy
-      copy: src=hw-info.sh dest=/root owner=root group=root mode=0700
+    - name: getting disk info
+      shell: df -P -BG --total --local|grep "^total"|awk '{print $2}'|sed 's/G//'
+      register: df
 
-    - name: run
-      command: /root/hw-info.sh
-      register: run
-
-    - debug: msg="{{ run.stdout }}"
+    - debug: msg="serverhw,{{ ansible_hostname }},{{ ansible_processor[2] }},{{ ansible_processor_vcpus }},{{ ansible_architecture }},{{ ansible_memtotal_mb }},{{ ansible_memory_mb.swap.total }},{{ df.stdout }},{{ ansible_os_family }},{{ ansible_distribution }},{{ ansible_distribution_version }},{{ ansible_kernel }},{{ ansible_date_time.tz }},{{ ansible_pkg_mgr }},{{ ansible_service_mgr }},{{ ansible_all_ipv4_addresses }},{{ ansible_system_vendor }},{{ ansible_virtualization_role }},{{ ansible_virtualization_type }}"
 
     - name: generate csv
-      shell: grep serverhw hw-info.log | awk '{print $2}' | sed 's/\"//g'|sed 's/serverhw,//g' > hw-info.csv
+      shell: grep serverhw hw-info.log|sed 's/.*serverhw\,//g'|sed 's/\"//g'>hw-info.csv 
       delegate_to: localhost
       run_once: yes
+      when: csv_gen is defined
 
     - name: add csv header
-      shell: sed -i '1i hostname,cpu,ram(M),san(G)' hw-info.csv
+      shell: sed -i '1i hostname,cpu,vcpu,arch,ram(M),swap(M),san(G),family,distro,ver,kernel,tz,pkg,service,ipv4all,vendor,role,type' hw-info.csv
       delegate_to: localhost
       run_once: yes
+      when: csv_gen is defined
