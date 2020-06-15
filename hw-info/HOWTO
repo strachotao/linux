@@ -1,1 +1,3 @@
-ansible-playbook hw-info.yml > hw-info.log 2>&1
+ansible-playbook hw-info.yml -e 'csv_gen=true' > hw-info.log 2>&1
+
+vystup bude v hw-info.csv
