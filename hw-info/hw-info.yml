@@ -1,4 +1,4 @@
-# hw-info.yml; version 2020-06-15; strachotao
+# hw-info.yml; version 2020-07-01; strachotao
 #
 #   vygeneruje hw-info.csv s informace o systemu; playbook neprovadi
 #     zadny zmeny, pouze ziskava informace
@@ -7,12 +7,13 @@
 #     ansible-playbook hw-info.yml -e 'csv_gen=true' > hw-info.log 2>&1
 #
 #   ziskana data
-#   hostname;cpu;vcpu;arch;ram(M);swap(M);san(G);family;distro;ver;kernel;tz;pkg;service;ipv4all;vendor;role;type
+#   hostname;vendor;model;sn;biosVer;biosDate;cpu;vcpu;arch;ram(M);swap(M);san(G);family;distro;ver;kernel;tz;pkg;service;ipv4all;vmRole;vmType
 
 ---
 - hosts: all
   become: yes
   gather_facts: yes
+  serial: 1
 
   tasks:
 
@@ -20,7 +21,7 @@
       shell: df -P -BG --total --local|grep "^total"|awk '{print $2}'|sed 's/G//'
       register: df
 
-    - debug: msg="serverhw;{{ ansible_hostname }};{{ ansible_processor[2] }};{{ ansible_processor_vcpus }};{{ ansible_architecture }};{{ ansible_memtotal_mb }};{{ ansible_memory_mb.swap.total }};{{ df.stdout }};{{ ansible_os_family }};{{ ansible_distribution }};{{ ansible_distribution_version }};{{ ansible_kernel }};{{ ansible_date_time.tz }};{{ ansible_pkg_mgr }};{{ ansible_service_mgr }};{{ ansible_all_ipv4_addresses }};{{ ansible_system_vendor }};{{ ansible_virtualization_role }};{{ ansible_virtualization_type }}"
+    - debug: msg="serverhw;{{ ansible_hostname }};{{ ansible_system_vendor }};{{ ansible_product_name }};{{ ansible_product_serial }};{{ ansible_bios_version }};{{ ansible_bios_date }};{{ ansible_processor[2] }};{{ ansible_processor_vcpus }};{{ ansible_architecture }};{{ ansible_memtotal_mb }};{{ ansible_memory_mb.swap.total }};{{ df.stdout }};{{ ansible_os_family }};{{ ansible_distribution }};{{ ansible_distribution_version }};{{ ansible_kernel }};{{ ansible_date_time.tz }};{{ ansible_pkg_mgr }};{{ ansible_service_mgr }};{{ ansible_all_ipv4_addresses }};{{ ansible_virtualization_role }};{{ ansible_virtualization_type }}"
 
     - name: generate csv
       shell: grep serverhw hw-info.log|sed 's/.*serverhw\;//g'|sed 's/\"//g'>hw-info.csv 
@@ -29,7 +30,7 @@
       when: csv_gen is defined
 
     - name: add csv header
-      shell: sed -i '1i hostname;cpu;vcpu;arch;ram(M);swap(M);san(G);family;distro;ver;kernel;tz;pkg;service;ipv4all;vendor;role;type' hw-info.csv
+      shell: sed -i '1i hostname;vendor;model;sn;biosVer;biosDate;cpu;vcpu;arch;ram(M);swap(M);san(G);family;distro;ver;kernel;tz;pkg;service;ipv4all;vmRole;vmType' hw-info.csv
       delegate_to: localhost
       run_once: yes
       when: csv_gen is defined
