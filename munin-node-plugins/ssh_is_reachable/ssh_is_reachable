@@ -13,7 +13,7 @@ case $1 in
         echo 'graph_printf %3.0lf'
         echo "graph_info Dostupnost z brnv1s04 na server:tcp22 aka ssh; 0=OK 5=excluded 10=nedostupny; Plugin sbira data pomoci cronu /etc/munin/ssh_is_reachable.sh, v tomto skritpu lze excludovad konkretni servery, aby se nehlasily jako nedostupne"
         for server in $(cat $data); do
-            server=$(awk -F\; '{print $1}' <<< ${server,,})
+            server=$(awk -F\; '{print $1}' <<< ${server})
             echo "${server}.label ${server}"
             echo "${server}.warning 8"
             echo "${server}.critical 9"
@@ -23,7 +23,7 @@ case $1 in
 esac
 
 for server in $(cat $data); do
-    serverName=$(awk -F\; '{print $1}' <<< ${server,,})
-    value=$(awk -F\; '{print $2}' <<< ${server,,})
+    serverName=$(awk -F\; '{print $1}' <<< ${server})
+    value=$(awk -F\; '{print $2}' <<< ${server})
     echo "${serverName}.value $value"
 done
