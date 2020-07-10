@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo "pouziti: $0 [-p] [--process] [-f] [--intmfil]"
-echo "    -p provede zpracovani, bez tohoto parametru pouze zobrazi stav"
+echo "    -p provede zpracovani, bez tohoto parametru neudela nic, pouze zobrazi stav ('dry run')"
 echo "    -f soubor intermediate certfikatu, jehoz obsah bude pridan do souboru certifikatu (vyhodne u nginx)"
 echo -e "$DELIMITER"
 
@@ -75,12 +75,21 @@ do
 
 	fi
 	echo
-	echo "konfigurace pro apache:"
+	echo "apache:"
+	echo "ansible -m copy -a \"src=${item}.cer dest=/etc/pki/tls/certs backup=yes\" --become SERVER"
+	echo "ansible -m copy -a \"src=${item}.key dest=/etc/pki/tls/private backup=yes\" --become SERVER"
+	echo "ansible -m service -a \"name=httpd state=restarted\" --become SERVER"
+	echo
 	echo "SSLCertificateFile /etc/pki/tls/certs/${item}.cer"
 	echo "SSLCertificateKeyFile /etc/pki/tls/private/${item}.key"
 	echo "SSLCACertificateFile /etc/pki/tls/certs/digicert-thawte-int.cer"
 	echo
-	echo "konfigurace nginx:"
+	echo
+	echo "nginx:"
+	echo "ansible -m copy -a \"src=${item}.cer dest=/etc/nginx/pki backup=yes\" --become SERVER"
+	echo "ansible -m copy -a \"src=${item}.key dest=/etc/nginx/pki backup=yes\" --become SERVER"
+	echo "ansible -m service -a \"name=nginx state=restarted\" --become SERVER"
+	echo
 	echo "ssl_certificate /etc/nginx/pki/${item}.cer;"
 	echo "ssl_certificate_key /etc/nginx/pki/${item}.key;"
 	echo
