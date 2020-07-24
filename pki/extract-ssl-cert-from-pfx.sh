@@ -1,13 +1,18 @@
 #!/bin/bash
-#
-# extract-ssl-cert-from-pfx.sh; verze 2020-06-04; strachotao 
-#
-#  v poli pfx je: ["soubor-certifikatu-a-klice.pfx"]="hesloklice"
+# extract-ssl-cert-from-pfx.sh; verze 2020-07-27; strachotao 
+#  wget https://raw.githubusercontent.com/strachotao/linux/master/pki/extract-ssl-cert-from-pfx.sh
 
+#  nastaveni
+
+#  v poli pfx je: ["soubor-certifikatu-a-klice.pfx"]="hesloklice"
 declare -A pfx=(
 	["strachota.eu.pfx"]="heslo"
 	["strachota.net.pfx"]="heslo"
+	["nejakadomena.cz.pfx"]="heslo"
 )
+
+#  konec nastaveni
+
 
 DELIMITER=$(printf '%46s\n' | tr ' ' =)
 debug=true
