@@ -1,5 +1,6 @@
 #!/bin/bash
-# acmesh_renew; version 2020-05-26; strachotao
+# acmesh_renew; version 2020-08-17; strachotao
+#  wget https://raw.githubusercontent.com/strachotao/linux/master/pki/acmesh_renew.sh
 #  velmi jednoucelove pro RENEW lets encrypt certifikatu, na boxu kde mame iptables+nginx+acme.sh
 #	
 
