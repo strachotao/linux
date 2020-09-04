@@ -1,8 +1,8 @@
-# sysprep; version 2020-05-14; strachotao 
+# sysprep; version 2020-09-04; strachotao 
 # USAGE:
 #  ansible-playbook -l se89 -e 'newip=192.168.0.83 newmask=255.255.255.0 newcidr=24 newgw=192.168.0.1 newdns1=192.168.0.1 newname=se92 promptcolor=37 reboot=true nicname=enp0s3 deployhosts=true' sysprep.yml
 #
-# sysprep pro centos7+ a ubuntu 18.04
+# sysprep pro centos7+,ubuntu 18.04lts, ubuntu 20.04lts
 # provede:
 #  - nastaveni sitove karty
 #    pokud neni nastaveny newip, neprovede zmenu tcp/ip a pokracuje dal
