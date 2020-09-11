@@ -1,5 +1,5 @@
 #!/bin/bash
-#https://cses.fi/problemset/task/1069
+# https://cses.fi/problemset/task/1069
 input=$1
 values=()
 for (( i=0; i<${#input}; i++ )); do

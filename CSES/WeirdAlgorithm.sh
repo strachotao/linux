@@ -1,5 +1,5 @@
 #!/bin/bash
-#https://cses.fi/problemset/task/1068
+# https://cses.fi/problemset/task/1068
 result="$1 "
 n=$1
 until [[ $n -eq 1 ]]; do

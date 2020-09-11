@@ -1,5 +1,5 @@
 #!/bin/bash
-#https://cses.fi/problemset/task/1618
+# https://cses.fi/problemset/task/1618
 num=$1
 fact=1
 zeroCount=0
