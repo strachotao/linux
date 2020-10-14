@@ -1,8 +1,8 @@
-# sysprep; version 2020-09-04; strachotao 
+# sysprep; version 2020-10-14; strachotao 
 # USAGE:
 #  ansible-playbook -l se89 -e 'newip=192.168.0.83 newmask=255.255.255.0 newcidr=24 newgw=192.168.0.1 newdns1=192.168.0.1 newname=se92 promptcolor=37 reboot=true nicname=enp0s3 deployhosts=true' sysprep.yml
 #
-# sysprep pro centos7+,ubuntu 18.04lts, ubuntu 20.04lts
+# sysprep pro centos6+, ubuntu lts: 14.04, 16.04, 18.04, 20.04
 # provede:
 #  - nastaveni sitove karty
 #    pokud neni nastaveny newip, neprovede zmenu tcp/ip a pokracuje dal
@@ -20,77 +20,89 @@
 
   tasks:
 
-  - name: remove current ifcfg
-    file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }} state=absent
-    when: newip is defined and ansible_os_family == "RedHat"
+  - when: newip is defined and ansible_os_family == "RedHat"
+    block:
+    - name: rhel remove current ifcfg
+      file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }} state=absent
+    - name: rhel touch ifcfg
+      file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }}  mode=0644 owner=root group=root state=touch
+    - name: rhel deploy ifcfg NIC
+      blockinfile:
+        path: /etc/sysconfig/network-scripts/ifcfg-{{ nicname }}
+        owner: root
+        group: root
+        mode: 0644
+        block: |
+          # ifcfg-{{ nicname }}; version {{ lookup('pipe','date +%Y-%m-%d') }}; strachotao
+          TYPE=Ethernet
+          PROXY_METHOD=none
+          BROWSER_ONLY=no
+          BOOTPROTO=none
+          IPADDR={{ newip }}
+          NETMASK={{ newmask }}
+          GATEWAY={{ newgw }}
+          DNS1={{ newdns1 }}
+          DEFROUTE=yes
+          IPV4_FAILURE_FATAL=no
+          NAME={{ nicname }}
+          DEVICE={{ nicname }}
+          ONBOOT=yes
 
-  - name: touch ifcfg
-    file: path=/etc/sysconfig/network-scripts/ifcfg-{{ nicname }}  mode=0644 owner=root group=root state=touch
-    when: newip is defined and ansible_os_family == "RedHat"
+  - when: newip is defined and ansible_os_family == 'Debian' and ansible_distribution_major_version|int <= 16 
+    block:
+    - name: ubuntu<=16 remove current config 
+      file: path=/etc/network/interfaces state=absent
+    - name: ubuntu<=16 touch interfaces
+      file: path=/etc/network/interfaces mode=0644 owner=root group=root state=touch
+    - name: ubuntu<=16 depoy interfaces
+      blockinfile:
+        path: /etc/network/interfaces
+        block: |
+          # interfaces; version {{ lookup('pipe','date +%Y-%m-%d') }}; strachotao
+          auto lo
+          iface lo inet loopback
+          auto {{ nicname }} 
+          iface {{ nicname }} inet static
+            address {{ newip }} 
+            netmask {{ newmask }}
+            gateway {{ newgw }}
+            dns-nameservers {{ newdns1 }}
 
-  - name: deploy ifcfg NIC
-    blockinfile:
-      path: /etc/sysconfig/network-scripts/ifcfg-{{ nicname }}
-      owner: root
-      group: root
-      mode: 0644
-      block: |
-        TYPE=Ethernet
-        PROXY_METHOD=none
-        BROWSER_ONLY=no
-        BOOTPROTO=none
-        IPADDR={{ newip }}
-        NETMASK={{ newmask }}
-        GATEWAY={{ newgw }}
-        DNS1={{ newdns1 }}
-        DEFROUTE=yes
-        IPV4_FAILURE_FATAL=no
-        NAME={{ nicname }}
-        DEVICE={{ nicname }}
-        ONBOOT=yes
-    when: newip is defined and ansible_os_family == "RedHat"
+  - when: newip is defined and ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 18
+    block:
+    - name: ubuntu>=18 remove current netplan
+      file: path=/etc/netplan/01-netcfg.yaml state=absent
+    - name: ubuntu>=18 touch netplan
+      file: path=/etc/netplan/01-netcfg.yaml mode=0644 owner=root group=root state=touch
+    - name: ubuntu>=18 deploy netplan
+      blockinfile:
+        path: /etc/netplan/01-netcfg.yaml
+        block: |
+          # netplan; version {{ lookup('pipe','date +%Y-%m-%d') }}; strachotao
+          # This file describes the network interfaces available on your system
+          # For more information, see netplan(5).
+          network:
+            version: 2
+            renderer: networkd
+            ethernets:
+              enp0s3:
+                addresses: [ {{ newip }}/{{ newcidr }} ]
+                gateway4: {{ newgw }}
+                nameservers:
+                  search: [ Debian ]
+                  addresses:
+                      - "{{ newdns1 }}"
 
-  - name: remove current netplan
-    file: path=/etc/netplan/01-netcfg.yaml state=absent
-    when: newip is defined and ansible_os_family == 'Debian'
-
-  - name: touch netplan
-    file: path=/etc/netplan/01-netcfg.yaml mode=0644 owner=root group=root state=touch
-    when: newip is defined and ansible_os_family == 'Debian'
-
-  - name: deploy netplan
-    blockinfile:
-      path: /etc/netplan/01-netcfg.yaml
-      block: |
-        # netplan; version {{ lookup('pipe','date +%Y-%m-%d') }}; strachotao
-        # This file describes the network interfaces available on your system
-        # For more information, see netplan(5).
-        network:
-          version: 2
-          renderer: networkd
-          ethernets:
-            enp0s3:
-              addresses: [ {{ newip }}/{{ newcidr }} ]
-              gateway4: {{ newgw }}
-              nameservers:
-                search: [ Debian ]
-                addresses:
-                    - "{{ newdns1 }}"
-    when: newip is defined and ansible_os_family == 'Debian'
-
-  - name: remove current hostname
-    file: path=/etc/hostname state=absent
-    when: newname is defined
-
-  - name: touch hostname
-    file: path=/etc/hostname mode=0644 owner=root group=root state=touch
-    when: newname is defined
-
-  - name: deploy hostname
-    lineinfile:
-      path: /etc/hostname
-      line: "{{ newname }}"
-    when: newname is defined
+  - when: newname is defined
+    block:
+    - name: remove current hostname
+      file: path=/etc/hostname state=absent
+    - name: touch hostname
+      file: path=/etc/hostname mode=0644 owner=root group=root state=touch
+    - name: deploy hostname
+      lineinfile:
+        path: /etc/hostname
+        line: "{{ newname }}"
 
   - name: refresh ssh daemon
     shell: 'rm -v /etc/ssh/ssh_host_*'
