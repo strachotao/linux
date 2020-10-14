@@ -22,11 +22,14 @@
     shell: printf "hostname{{csv_delimiter}}vendor{{csv_delimiter}}model{{csv_delimiter}}sn{{csv_delimiter}}biosVer{{csv_delimiter}}biosDate{{csv_delimiter}}cpu{{csv_delimiter}}vcpu{{csv_delimiter}}arch{{csv_delimiter}}ram(M){{csv_delimiter}}swap(M){{csv_delimiter}}san(G){{csv_delimiter}}family{{csv_delimiter}}distro{{csv_delimiter}}ver{{csv_delimiter}}kernel{{csv_delimiter}}tz{{csv_delimiter}}pkg{{csv_delimiter}}service{{csv_delimiter}}ipv4all{{csv_delimiter}}vmRole{{csv_delimiter}}vmType\n" > hw-info.csv
     run_once: yes
     delegate_to: localhost
+    changed_when: false
 
   - name: Gathering Further Disk Info
     shell: df -P -BG --total --local|grep "^total"|awk '{print $2}'|sed 's/G//'
     register: df
+    changed_when: false
 
   - name: Saving Results
     shell: printf "{{ ansible_hostname }}{{csv_delimiter}}{{ ansible_system_vendor }}{{csv_delimiter}}{{ ansible_product_name }}{{csv_delimiter}}{{ ansible_product_serial }}{{csv_delimiter}}{{ ansible_bios_version }}{{csv_delimiter}}{{ ansible_bios_date }}{{csv_delimiter}}{{ ansible_processor[2] }}{{csv_delimiter}}{{ ansible_processor_vcpus }}{{csv_delimiter}}{{ ansible_architecture }}{{csv_delimiter}}{{ ansible_memtotal_mb }}{{csv_delimiter}}{{ ansible_memory_mb.swap.total }}{{csv_delimiter}}{{ df.stdout }}{{csv_delimiter}}{{ ansible_os_family }}{{csv_delimiter}}{{ ansible_distribution }}{{csv_delimiter}}{{ ansible_distribution_version }}{{csv_delimiter}}{{ ansible_kernel }}{{csv_delimiter}}{{ ansible_date_time.tz }}{{csv_delimiter}}{{ ansible_pkg_mgr }}{{csv_delimiter}}{{ ansible_service_mgr }}{{csv_delimiter}}{{ ansible_all_ipv4_addresses }}{{csv_delimiter}}{{ ansible_virtualization_role }}{{csv_delimiter}}{{ ansible_virtualization_type }}\n" >> hw-info.csv
     delegate_to: localhost
+    changed_when: false
