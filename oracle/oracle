@@ -1,0 +1,228 @@
+#!/bin/bash
+#
+# oracle       pomocny skript na ovladani instanci oraclu
+# chkconfig: 345 95 05
+# description: pomocny skript na startovani|zastavnovani instanci oraclu
+
+
+# dbsm oracle init script; verze 2016-10-17; strachotao 
+#  spusti|vypne oracle instance ze souboru /etc/oratab pomoci
+#  dbstart a dbshut
+#
+# TODO: je to na prase, predelat: runuser na su
+
+# logy oraclu /u00/app/oracle/product/11.2.0.4/dbhome_1/shutdown.log
+#               /u00/app/oracle/product/11.2.0.4/dbhome_1/startup.log
+# kontrola sluzby, zda skutecne startuje|vypina, musi existovat linky
+# v /etc/rc.d/rcX.d/... otestujeme: find /etc -name "???oracle"
+
+. /etc/rc.d/init.d/functions
+
+ORA_HOME=$(/usr/bin/get-ORACLE_HOME)
+ORA_OWNER=oracle
+LOG=/var/log/oracle/oracle_start_stop.log
+LOCK=/var/lock/subsys/oracle
+BACKUP_LOCK=/home/oracle/.backupInProgress
+RETVAL=0
+BINS=(
+        "$ORA_HOME/bin/dbstart"
+        "$ORA_HOME/bin/dbshut"
+        "$ORA_HOME/bin/lsnrctl"
+        '/etc/oratab'
+        '/u00/backupscripts/DB1_archlogs_backup.sh'
+        '/u00/backupscripts/DB2_archlogs_backup.sh'
+)
+
+function get-date {
+        TS=$(/bin/date '+%Y.%m.%d %H:%M:%S')
+        echo $TS
+}
+
+function get-instances {
+        INSTS=$(cat /etc/oratab|grep -v -e ^# -e ^$|grep "\:[yY]$"|cut -d":" -f1)
+        echo $INSTS
+}
+
+function get-instances-count {
+        INSTSC=$(cat /etc/oratab|grep -v -e ^# -e ^$|grep "\:[yY]$"|wc -l)
+        echo $INSTSC
+}
+
+function has-instance-pmon {
+        ps -ef|grep -i "pmon\_${1}"|grep -v grep 2>/dev/null 1>&2
+        echo $?
+}
+
+function get-instance-pmon {
+        INSTCPM=$(ps -ef|grep -i "pmon\_${1}"|grep -v grep)
+        echo $INSTCPM
+}
+
+function get-uptime {
+        UPTM=$(stat /var/lock/subsys/oracle|grep Modify)
+        echo ${UPTM#* }
+}
+
+for ((x = 0; x < ${#BINS[@]}; x++)); do
+        if [ ! -f ${BINS[$x]} ]; then
+                echo "$(get-date) Chyba,nenalezen ${BINS[$x]}" | \
+                         tee -a $LOG
+                exit 1
+        fi
+done
+
+if [ ! -f $LOG ]; then
+        touch $LOG
+        chown oracle:dba $LOG
+fi
+
+case "$1" in
+    start)
+        if [ ! "$(get-instances-count)" -ge 1 ]; then
+                echo "$(get-date) Error, there is no instance to start in the /etc/oratab" | tee -a $LOG
+                exit 1
+        fi
+        if [ ! -f $LOCK ]; then
+                echo "$(get-date) Starting instances $(get-instances)..." >> $LOG
+                runuser -l $ORA_OWNER -c "$ORA_HOME/bin/dbstart $ORA_HOME"
+                RETVAL=$?
+
+                touch $LOCK && echo "$(get-date) Lock file ($LOCK) has been now created" >> $LOG
+
+                for SID in DB1 DB2; do
+                        ps -U oracle -u oracle u | grep -i ${SID}_archlogs_backup.sh 2>/dev/null 1>&2
+                        RCARCH=$?
+                        if [ $RCARCH -eq 1 ]; then
+                                runuser -l $ORA_OWNER -c "nohup /u00/backupscripts/${SID}_archlogs_backup.sh &"
+                                TMPV=$?
+                                echo "$(get-date) Starting  \"nohup /u00/backupscripts/${SID}_archlogs_backup.sh &\" (exit code ${TMPV})" >> $LOG
+                        fi
+                done
+
+                if [ -f $BACKUP_LOCK ]; then
+                        BACKUP_TYPE=$(cat $BACKUP_LOCK)
+                        rm -f $BACKUP_LOCK 2> /dev/null 1>&2
+                        echo "$(get-date) $BACKUP_LOCK (${BACKUP_TYPE}) has been deleted" >> $LOG
+                fi
+
+                echo "$(get-date) All instances started (exit code ${RETVAL})" >> $LOG
+                echo "$(get-date) Bye!" >> $LOG
+        else
+                ILOCK=$(ls -l /var/lock/subsys/oracle)
+                echo "Oracle jiz bezi priblizne od $(get-uptime)"
+                echo "Soubor zamku: ${ILOCK}"
+        fi
+        ;;
+    stop)
+        if [ ! "$(get-instances-count)" -ge 1 ]; then
+                echo "$(get-date) Error, there is no instance to stop in the /etc/oratab" | tee -a $LOG
+                exit 1
+        fi
+        if [ -f $LOCK ]; then
+                echo "$(get-date) Stopping instances $(get-instances)" >> $LOG
+                runuser -l $ORA_OWNER -c "$ORA_HOME/bin/dbshut $ORA_HOME"
+                RETVAL=$?
+                rm -f $LOCK
+                PMONS=$(ps -ef|grep -i pmon|grep -v grep|wc -l)
+                echo "$(get-date) Stopped (exit code ${RETVAL}) (pmon count=${PMONS})" >> $LOG
+                echo "$(get-date) Bye!" >> $LOG
+        else
+                echo "Oracle nebezi!"
+        fi
+        ;;
+    fullstatus)
+        if [ ! "$(get-instances-count)" -ge 1 ]; then
+                echo -n $"Chyba, v /etc/oratab neni instance na zpracovani!" && failure
+                echo
+                echo "Vypis bezicich pmon procesu:"
+                ps -ef|grep -i "pmon"|grep -v grep
+        fi
+        ORAVER=$(runuser -l $ORA_OWNER -c "$ORA_HOME/OPatch/opatch lsinventory | grep 'Oracle Database'")
+        echo "Verze z aktualniho ORACLE_HOME ($ORA_HOME):"
+        echo "$ORAVER"
+        echo
+        IC=$(get-instances-count)
+        for (( i=1; i<=$IC; i++ ))
+        do
+                INSTANCENAME=$(get-instances|cut -d" " -f${i})
+                INSTANCEPMON=$(has-instance-pmon "$INSTANCENAME")
+                [ $INSTANCEPMON -eq 0 ] && echo -n $"Instance $INSTANCENAME bezi" && success
+                [ $INSTANCEPMON -eq 1 ] && echo -n $"Instance $INSTANCENAME je zastavena" && failure
+                echo
+                get-instance-pmon "$INSTANCENAME"
+                echo
+        done
+        echo -n $"Soubor zamku ($LOCK)"
+        if [ -f $LOCK ]; then
+                success
+        else
+                failure
+        fi
+        echo
+        ls -l $LOCK
+        echo
+        ARCHCOUNT=$(ps -ef|grep -i "archlogs_backup"|grep -v grep|wc -l)
+        echo -n $"Procesy skriptu pro zalohu archlogu"
+        [ $ARCHCOUNT -eq 2 ] && success || failure
+        echo
+        ps -ef|grep -i "archlogs_backup"|grep -v grep
+        echo
+        echo -n $"Listner posloucha na 1521/tcp"
+        netstat -tulpn|grep 1521|grep tnslsnr 2>/dev/null 1>&2
+        [ $? -eq 0 ] && success || failure
+        echo
+        netstat -tulpn|grep 1521|grep tnslsnr
+        echo
+        runuser -l $ORA_OWNER -c "$ORA_HOME/bin/lsnrctl status"
+        ;;
+    status)
+        if [ ! "$(get-instances-count)" -ge 1 ]; then
+                echo -n $"Chyba, v /etc/oratab neni instance na zpracovani!" && failure
+                echo
+                echo "Vypis bezicich pmon procesu:"
+                ps -ef|grep -i "pmon"|grep -v grep
+        fi
+        IC=$(get-instances-count)
+        for (( i=1; i<=$IC; i++ ))
+        do
+                INSTANCENAME=$(get-instances|cut -d" " -f${i})
+                INSTANCEPMON=$(has-instance-pmon "$INSTANCENAME")
+                [ $INSTANCEPMON -eq 0 ] && echo -n $"Instance $INSTANCENAME bezi" && success
+                [ $INSTANCEPMON -eq 1 ] && echo -n $"Instance $INSTANCENAME je zastavena" && failure
+                echo
+        done
+        echo
+        echo -n $"Soubor zamku ($LOCK)"
+        if [ -f $LOCK ]; then
+                success
+                echo
+                echo -n $"Oracle bezi od $(get-uptime)"
+                success
+                echo
+        else
+                failure
+                echo
+        fi
+        echo
+        ARCHCOUNT=$(ps -ef|grep -i "archlogs_backup"|grep -v grep|wc -l)
+        echo -n $"Procesy skriptu pro zalohu archlogu"
+        [ $ARCHCOUNT -eq 2 ] && success || failure
+        echo
+        echo
+        echo -n $"Listener posloucha na 1521/tcp"
+        netstat -tulpn|grep 1521|grep tnslsnr 2>/dev/null 1>&2
+        [ $? -eq 0 ] && success || failure
+        echo
+        ;;
+    restart)
+        echo "restart neni implementovan z duvodu bezpecnosti. pouzijte"
+        echo "postupne stop a start parametry s kontrolou oracle procesu."
+        exit 1
+        ;;
+    *)
+        echo "Pouziti: service oracle {start|stop|status|fullstatus}"
+        exit 1
+        ;;
+esac
+
+exit $RETVAL
