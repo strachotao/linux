@@ -1,5 +1,5 @@
 #!/bin/bash
-# acmesh_renew; version 2020-08-17; strachotao
+# acmesh_renew; version 2020-11-10; strachotao
 #  wget https://raw.githubusercontent.com/strachotao/linux/master/pki/acmesh_renew.sh
 #  velmi jednoucelove pro RENEW lets encrypt certifikatu, na boxu kde mame iptables+nginx+acme.sh
 #	
@@ -43,7 +43,7 @@ service nginx stop
 cd /root/.acme.sh/
 for domain in $domains; do
         echo "[$(date)] spoustim renew pro $domain"
-        ./acme.sh -d $domain --renew --standalone --use-wget --insecure
+        ./acme.sh -d $domain --renew --standalone --use-wget --force --insecure
         echo "[$(date)] renew $domain je hotovy"
 done
 
