@@ -1,7 +1,7 @@
 # update-and-patch.yml; version 2020-03-11; strachotao
 #  playbook na upgrade jadra + sys balicku
 #
-#  wget https://raw.githubusercontent.com/strachotao/linux/master/update-and-patch.yml 
+#  wget https://raw.githubusercontent.com/strachotao/linux/master/update-and-patch.yml
 
 ---
 - hosts: all
@@ -9,70 +9,71 @@
   gather_facts: yes
 
   tasks:
-    - name: make backup directory
-      file:
-        path: /root/update
-        state: directory
-        owner: root
-        group: root
-        mode: 0755
-          
-    - name: backup /etc to backup directory
-      command: tar -czpf "/root/update/etc.{{ansible_date_time.iso8601}}.tgz" /etc
+  - name: make backup directory
+    file:
+      path: /root/update
+      state: directory
+      owner: root
+      group: root
+      mode: 0755
+
+  - name: backup /etc to backup directory
+    command: tar -czpf "/root/update/etc.{{ansible_date_time.iso8601}}.tgz" /etc
+    args:
       warn: false
 
-    - when: ansible_os_family == "RedHat"
-      block:
-      - name: update the system (RHEL)
-        yum:
-          name: "*"
-          state: latest
-          exclude: munin*
-          disablerepo: "el6*,el7*"
-          disable_gpg_check: yes
-        register: updated_now
-      - name: restart system to reboot to newest kernel
-        shell: "sleep 5 && reboot"
-        async: 1
-        poll: 0
-        when: updated_now.changed
-      - name: wait for 40 seconds
-        pause: seconds=40
-        when: updated_by_yum.changed
-      - name: wait for the system to reboot
-        wait_for_connection:
-          connect_timeout: 30
-          sleep: 5
-          delay: 5
-          timeout: 80
-        when: updated_by_yum.changed
+  - when: ansible_os_family == "RedHat"
+    block:
+    - name: (RHEL) update the system
+      yum:
+        name: "*"
+        state: latest
+        exclude: munin*
+        disablerepo: "el6*,el7*"
+        disable_gpg_check: yes
+      register: updated_now
+    - name: (RHEL) restart system to reboot to newest kernel
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
+      when: updated_now.changed
+    - name: (RHEL) wait for 40 seconds
+      pause: seconds=40
+      when: updated_by_yum.changed
+    - name: (RHEL) wait for the system to reboot
+      wait_for_connection:
+        connect_timeout: 30
+        sleep: 5
+        delay: 5
+        timeout: 80
+      when: updated_by_yum.changed
 
-    - when: ansible_os_family == "Debian"
-      block:
-      - name: Run apt-get autoclean
-        apt:
-          autoclean: yes
-      - name: Run apt-get autoremove
-        apt:
-          autoremove: yes
-      - name: Update apt-get package cache
-        apt:
-          update_cache: yes
-      - name: Upgrade system
-        apt:
-          upgrade: 'yes'
-      - name: Check if a reboot is required
-        register: reboot_required_file
-        stat:
-          path: /var/run/reboot-required
-          get_md5: no
-      - name: Reboot system
-        shell: sleep 2 && reboot
-        async: 1
-        ignore_errors: true
-      - name: Waiting for server to come back
-        wait_for_connection:
-          connect_timeout: 10
-          sleep: 5
-          delay: 5
-          timeout: 300
+  - when: ansible_os_family == "Debian"
+    block:
+    - name: (Ubuntu) run apt-get autoclean
+      apt:
+        autoclean: yes
+    - name: (Ubuntu) run apt-get autoremove
+      apt:
+        autoremove: yes
+    - name: (Ubuntu) update apt-get package cache
+      apt:
+        update_cache: yes
+    - name: (Ubuntu) upgrade system
+      apt:
+        upgrade: 'yes'
+    - name: (Ubuntu) check if a reboot is required
+      register: reboot_required_file
+      stat:
+        path: /var/run/reboot-required
+        get_md5: no
+    - name: (Ubuntu) reboot system
+      shell: sleep 2 && reboot
+      async: 1
+      ignore_errors: true
+    - name: (Ubuntu) waiting for server to come back
+      wait_for_connection:
+        connect_timeout: 10
+        sleep: 5
+        delay: 5
+        timeout: 300
