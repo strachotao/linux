@@ -104,9 +104,13 @@
         path: /etc/hostname
         line: "{{ newname }}"
 
-  - name: refresh ssh daemon
+  - name: RedHat refresh ssh daemon
     shell: 'rm -v /etc/ssh/ssh_host_*'
     when: newip is defined and ansible_os_family == "RedHat"
+
+  - name: Debian refresh ssh daemon
+    shell: 'dpkg-reconfig openssh-server'
+    when: newip is defined and ansible_os_family == "Debian"
 
   - name: deploy /etc/hosts
     copy: src=/etc/hosts dest=/etc/hosts
