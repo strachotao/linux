@@ -1,4 +1,4 @@
-# hw-info.yml; version 2020-10-15; strachotao
+# hw-info.yml; version 2021-08-24; strachotao
 # wget https://raw.githubusercontent.com/strachotao/linux/master/hw-info/hw-info.yml
 #
 #   pouziti: ansible-playbook hw-info.yml
@@ -20,7 +20,7 @@
 
   tasks:
   - name: Prepare CSV
-    shell: printf "hostname{{ csv_delimiter }}vendor{{ csv_delimiter }}model{{ csv_delimiter }}sn{{ csv_delimiter }}biosVer{{ csv_delimiter }}biosDate{{ csv_delimiter }}cpu{{ csv_delimiter }}arch{{ csv_delimiter }}vcpu{{ csv_delimiter }}ram(M){{ csv_delimiter }}san(G){{ csv_delimiter }}swap(M){{ csv_delimiter }}uptime(sec){{ csv_delimiter }}family{{ csv_delimiter }}distro{{ csv_delimiter }}ver{{ csv_delimiter }}kernel{{ csv_delimiter }}timeZone{{ csv_delimiter }}pkgMgr{{ csv_delimiter }}serviceMgr{{ csv_delimiter }}ipv4all{{ csv_delimiter }}ipv6all{{ csv_delimiter }}vmRole{{ csv_delimiter }}vmType\n" > hw-info.csv
+    shell: printf "hostname{{ csv_delimiter }}vendor{{ csv_delimiter }}model{{ csv_delimiter }}sn{{ csv_delimiter }}biosVer{{ csv_delimiter }}biosDate{{ csv_delimiter }}cpu{{ csv_delimiter }}arch{{ csv_delimiter }}vcpu{{ csv_delimiter }}ram(M){{ csv_delimiter }}san(G){{ csv_delimiter }}swap(M){{ csv_delimiter }}uptime(sec){{ csv_delimiter }}family{{ csv_delimiter }}distro{{ csv_delimiter }}ver{{ csv_delimiter }}kernel{{ csv_delimiter }}kernel_ver{{ csv_delimiter }}timeZone{{ csv_delimiter }}pkgMgr{{ csv_delimiter }}serviceMgr{{ csv_delimiter }}ipv4all{{ csv_delimiter }}ipv6all{{ csv_delimiter }}vmRole{{ csv_delimiter }}vmType\n" > ./hw-info.csv
     run_once: yes
     delegate_to: localhost
     changed_when: false
@@ -31,6 +31,6 @@
     changed_when: false
 
   - name: Saving Results
-    shell: printf "{{ ansible_hostname }}{{ csv_delimiter }}{{ ansible_system_vendor }}{{ csv_delimiter }}{{ ansible_product_name }}{{ csv_delimiter }}{{ ansible_product_serial }}{{ csv_delimiter }}{{ ansible_bios_version }}{{ csv_delimiter }}{{ ansible_bios_date }}{{ csv_delimiter }}{{ ansible_processor[2] }}{{ csv_delimiter }}{{ ansible_architecture }}{{ csv_delimiter }}{{ ansible_processor_vcpus }}{{ csv_delimiter }}{{ ansible_memtotal_mb }}{{ csv_delimiter }}{{ df.stdout }}{{ csv_delimiter }}{{ ansible_memory_mb.swap.total }}{{ csv_delimiter }}{{ ansible_uptime_seconds }}{{ csv_delimiter }}{{ ansible_os_family }}{{ csv_delimiter }}{{ ansible_distribution }}{{ csv_delimiter }}{{ ansible_distribution_version }}{{ csv_delimiter }}{{ ansible_kernel }}{{ csv_delimiter }}{{ ansible_date_time.tz }}{{ csv_delimiter }}{{ ansible_pkg_mgr }}{{ csv_delimiter }}{{ ansible_service_mgr }}{{ csv_delimiter }}{{ ansible_all_ipv4_addresses }}{{ csv_delimiter }}{{ ansible_all_ipv6_addresses }}{{ csv_delimiter }}{{ ansible_virtualization_role }}{{ csv_delimiter }}{{ ansible_virtualization_type }}\n" >> hw-info.csv
+    shell: printf "{{ ansible_hostname }}{{ csv_delimiter }}{{ ansible_system_vendor }}{{ csv_delimiter }}{{ ansible_product_name }}{{ csv_delimiter }}{{ ansible_product_serial }}{{ csv_delimiter }}{{ ansible_bios_version }}{{ csv_delimiter }}{{ ansible_bios_date }}{{ csv_delimiter }}{{ ansible_processor[2] }}{{ csv_delimiter }}{{ ansible_architecture }}{{ csv_delimiter }}{{ ansible_processor_vcpus }}{{ csv_delimiter }}{{ ansible_memtotal_mb }}{{ csv_delimiter }}{{ df.stdout }}{{ csv_delimiter }}{{ ansible_memory_mb.swap.total }}{{ csv_delimiter }}{{ ansible_uptime_seconds }}{{ csv_delimiter }}{{ ansible_os_family }}{{ csv_delimiter }}{{ ansible_distribution }}{{ csv_delimiter }}{{ ansible_distribution_version }}{{ csv_delimiter }}{{ ansible_kernel }}{{ csv_delimiter }}{{ ansible_kernel_version }}{{ csv_delimiter }}{{ ansible_date_time.tz }}{{ csv_delimiter }}{{ ansible_pkg_mgr }}{{ csv_delimiter }}{{ ansible_service_mgr }}{{ csv_delimiter }}{{ ansible_all_ipv4_addresses }}{{ csv_delimiter }}{{ ansible_all_ipv6_addresses }}{{ csv_delimiter }}{{ ansible_virtualization_role }}{{ csv_delimiter }}{{ ansible_virtualization_type }}\n" >> hw-info.csv
     delegate_to: localhost
     changed_when: false
