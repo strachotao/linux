@@ -109,7 +109,7 @@
     when: newip is defined and ansible_os_family == "RedHat"
 
   - name: Debian refresh ssh daemon
-    shell: 'dpkg-reconfig openssh-server'
+    shell: 'dpkg-reconfigure openssh-server'
     when: newip is defined and ansible_os_family == "Debian"
 
   - name: deploy /etc/hosts
