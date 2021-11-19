@@ -26,7 +26,7 @@
     changed_when: false
 
   - name: Gathering Further Disk Info
-    shell: df -P -BG --total --local|grep "^total"|awk '{print $2}'|sed 's/G//'
+    shell: lsblk | awk '$1 ~ /^sd[a-z]/ { I+=$4} END {print I}' 
     register: df
     changed_when: false
 
