@@ -1,10 +1,13 @@
 #!/bin/bash
 # extract-ssl-cert-from-pfx.sh; verze 2021-09-16; strachotao 
 #  wget https://raw.githubusercontent.com/strachotao/linux/master/pki/extract-ssl-cert-from-pfx.sh
-
+#
 #  nastaveni
-
+#
 #  v poli pfx je: ["soubor-certifikatu-a-klice.pfx"]="hesloklice"
+#
+#  generovani konfigurace pro vice souboru
+#  for file in $(ls -1 *pfx); do echo "[\"$file\"]=\"hesloPlaceHolder\""; done
 
 
 
