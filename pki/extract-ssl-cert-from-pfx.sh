@@ -30,6 +30,7 @@ while [[ $# -gt 0 ]]; do
 		-f)	intfile=true;intfilename="$1";shift;;
 		-i)	inter=true;;
 		-p)	debug=false;;
+		-h)     haproxy=true;;
 		*) echo "Spatny parametr!";;
     	esac
 done
@@ -37,10 +38,12 @@ done
 echo "pouziti: $0 [-p] [-i] [-f soubor]"
 echo "    -p : provede zpracovani, bez tohoto parametru neudela nic, pouze zobrazi stav ('dry run')"
 echo "    -i : do souboru certifikatu zapise i mezilehly certifikat (dafaultne pokud je v pfx), nebo ze souboru: -f soubor"
+echo "    -h : provede zapsani klice a certifikatu do souboru server.pem - pouziti pro haproxy"
 echo "    -f : soubor mezilehleho certifikatu"
 echo
 echo "priklad: $0 -p -i -f intCA.cer"
 echo "         $0 -p -i"
+echo "         $0 -p -i -f intCA.cer -h"
 echo
 echo
 echo -e "$DELIMITER"
@@ -107,7 +110,18 @@ do
 			cat ${item}.int.cer >> ${item}.cer
 		fi	
 	fi
-		
+
+	if [[ $haproxy == true ]]; then
+		rm -f ${item}__server.pem
+		cat ${item}.cer >> ${item}__server.pem
+		cat ${item}.key >> ${item}__server.pem
+       		echo
+		echo "ansible -m copy -a \"src=${item}__server.pem dest=/etc/haproxy/ssl/${item}/server.pem backup=yes\" --become SRV"
+	else
+       		echo
+		echo "ansible -m copy -a \"src=${item}.cer dest=/etc/nginx/pki backup=yes\" --become SRV"
+		echo "ansible -m copy -a \"src=${item}.key dest=/etc/nginx/pki backup=yes\" --become SRV"
+	fi	
 	#echo
 	#echo "apache:"
 	#echo "ansible -m copy -a \"src=${item}.cer dest=/etc/pki/tls/certs backup=yes\" --become SERVER"
@@ -118,9 +132,6 @@ do
 	#echo "SSLCertificateKeyFile /etc/pki/tls/private/${item}.key"
 	#echo "SSLCACertificateFile /etc/pki/tls/certs/digicert-thawte-int.cer"
 	#echo
-	echo
-	echo "ansible -m copy -a \"src=${item}.cer dest=/etc/nginx/pki backup=yes\" --become SRV"
-	echo "ansible -m copy -a \"src=${item}.key dest=/etc/nginx/pki backup=yes\" --become SRV"
 	#echo "ansible -m service -a \"name=nginx state=restarted\" --become SRV"
 	#echo
 	#echo "ssl_certificate /etc/nginx/pki/${item}.cer;"
