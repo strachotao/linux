@@ -1,5 +1,5 @@
 #!/bin/bash
-# extract-ssl-cert-from-pfx.sh; verze 2021-09-16; strachotao 
+# extract-ssl-cert-from-pfx.sh; verze 2022-09-08; strachotao 
 #  wget https://raw.githubusercontent.com/strachotao/linux/master/pki/extract-ssl-cert-from-pfx.sh
 #
 #  nastaveni
@@ -22,11 +22,13 @@ declare -A pfx=(
 
 DELIMITER=$(printf '%46s\n' | tr ' ' =)
 debug=true
-
+srv="srv"
+ansibleCmdFile="/tmp/ansibleCmd"
 while [[ $# -gt 0 ]]; do
 	param="$1"
 	shift;
 	case $param in
+		-s)	srv="$1";shift;;
 		-f)	intfile=true;intfilename="$1";shift;;
 		-i)	inter=true;;
 		-p)	debug=false;;
@@ -37,11 +39,12 @@ done
 
 echo "pouziti: $0 [-p] [-i] [-f soubor]"
 echo "    -p : provede zpracovani, bez tohoto parametru neudela nic, pouze zobrazi stav ('dry run')"
+echo "    -s : nazev serveru, kt. bude zobrazovan pro ansible"
 echo "    -i : do souboru certifikatu zapise i mezilehly certifikat (dafaultne pokud je v pfx), nebo ze souboru: -f soubor"
 echo "    -h : provede zapsani klice a certifikatu do souboru server.pem - pouziti pro haproxy"
 echo "    -f : soubor mezilehleho certifikatu"
 echo
-echo "priklad: $0 -p -i -f intCA.cer"
+echo "priklad: $0 -p -i -f intCA.cer -s server1"
 echo "         $0 -p -i"
 echo "         $0 -p -i -f intCA.cer -h"
 echo
@@ -51,6 +54,10 @@ echo -e "$DELIMITER"
 if [[ -n ${intmfil} && ! -f ${intmfil} ]]; then
 	echo -e " $(tput setaf 1)Zdrojovy soubor intm. certifikatu ${intmfil} nelze precist!$(tput sgr0)\n${DELIMITER}"
 	exit 1	
+fi
+
+if  [[ -f "$ansibleCmdFile" ]]; then
+	rm -f $ansibleCmdFile
 fi
 
 for item in "${!pfx[@]}";
@@ -116,12 +123,18 @@ do
 		cat ${item}.cer >> ${item}__server.pem
 		cat ${item}.key >> ${item}__server.pem
        		echo
-		echo "ansible -m copy -a \"src=${item}__server.pem dest=/etc/haproxy/ssl/${item}/server.pem backup=yes\" --become SRV"
+		echo "ansible -m copy -a \"src=${item}__server.pem dest=/etc/haproxy/ssl/${item}/server.pem backup=yes\" --become $srv"
+		echo "ansible -m copy -a \"src=${item}__server.pem dest=/etc/haproxy/ssl/${item}/server.pem backup=yes\" --become $srv" >> $ansibleCmdFile
 	else
        		echo
-		echo "ansible -m copy -a \"src=${item}.cer dest=/etc/nginx/pki backup=yes\" --become SRV"
-		echo "ansible -m copy -a \"src=${item}.key dest=/etc/nginx/pki backup=yes\" --become SRV"
+		echo "ansible -m copy -a \"src=${item}.cer dest=/etc/nginx/pki backup=yes\" --become $srv"
+		echo "ansible -m copy -a \"src=${item}.cer dest=/etc/nginx/pki backup=yes\" --become $srv" >> $ansibleCmdFile
+		echo "ansible -m copy -a \"src=${item}.key dest=/etc/nginx/pki backup=yes\" --become $srv"
+		echo "ansible -m copy -a \"src=${item}.key dest=/etc/nginx/pki backup=yes\" --become $srv" >> $ansibleCmdFile
 	fi	
+
+	echo "https://www.ssllabs.com/ssltest/analyze.html?d=${item}&hideResults=on&latest"
+	echo "https://www.ssllabs.com/ssltest/analyze.html?d=${item}&hideResults=on&latest" >> $ansibleCmdFile
 	#echo
 	#echo "apache:"
 	#echo "ansible -m copy -a \"src=${item}.cer dest=/etc/pki/tls/certs backup=yes\" --become SERVER"
@@ -139,3 +152,4 @@ do
 	#echo
 	echo -e "Hotovo!\n${DELIMITER}"
 done
+echo "Ansible commandy jsou v $ansibleCmdFile"
