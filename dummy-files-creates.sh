@@ -1,7 +1,7 @@
 #!/bin/bash
 # bulk dummy files; version 2018-01-17; strachotao
 # 
-#   wget https://raw.githubusercontent.com/strachotao/linux/master/dummy-files-creates.sh
+#   wget https://raw.githubusercontent.com/strachotao/linux/master/dummy-files-creates.sh; chmod +x dummy-files-creates.sh
 #
 #   TODO:
 
