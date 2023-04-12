@@ -134,7 +134,7 @@ do
 	fi	
 
 	echo "https://www.ssllabs.com/ssltest/analyze.html?d=${item}&hideResults=on&latest"
-	echo "https://www.ssllabs.com/ssltest/analyze.html?d=${item}&hideResults=on&latest" >> $ansibleCmdFile
+	echo "#https://www.ssllabs.com/ssltest/analyze.html?d=${item}&hideResults=on&latest" >> $ansibleCmdFile
 	#echo
 	#echo "apache:"
 	#echo "ansible -m copy -a \"src=${item}.cer dest=/etc/pki/tls/certs backup=yes\" --become SERVER"
