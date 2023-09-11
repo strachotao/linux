@@ -1,5 +1,5 @@
 #!/bin/bash
-# extract-ssl-cert-from-pfx.sh; verze 2022-09-08; strachotao 
+# extract-ssl-cert-from-pfx.sh; verze 2023-09-11; strachotao
 #  wget https://raw.githubusercontent.com/strachotao/linux/master/pki/extract-ssl-cert-from-pfx.sh
 #
 #  nastaveni
@@ -122,6 +122,7 @@ do
 		rm -f ${item}__server.pem
 		cat ${item}.cer >> ${item}__server.pem
 		cat ${item}.key >> ${item}__server.pem
+		rm -f ${item}.int.cer ${item}.cer ${item}.key
        		echo
 		echo "ansible -m copy -a \"src=${item}__server.pem dest=/etc/haproxy/ssl/${item}/server.pem backup=yes\" --become $srv"
 		echo "ansible -m copy -a \"src=${item}__server.pem dest=/etc/haproxy/ssl/${item}/server.pem backup=yes\" --become $srv" >> $ansibleCmdFile
@@ -134,7 +135,7 @@ do
 	fi	
 
 	echo "https://www.ssllabs.com/ssltest/analyze.html?d=${item}&hideResults=on&latest"
-	echo "#https://www.ssllabs.com/ssltest/analyze.html?d=${item}&hideResults=on&latest" >> $ansibleCmdFile
+	echo "https://www.ssllabs.com/ssltest/analyze.html?d=${item}&hideResults=on&latest" >> $ansibleCmdFile
 	#echo
 	#echo "apache:"
 	#echo "ansible -m copy -a \"src=${item}.cer dest=/etc/pki/tls/certs backup=yes\" --become SERVER"
