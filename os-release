@@ -140,3 +140,10 @@ ID=debian
 HOME_URL="https://www.debian.org/"
 SUPPORT_URL="https://www.debian.org/support"
 BUG_REPORT_URL="https://bugs.debian.org/"
+
+NAME=FreeBSD
+VERSION="13.1-RELEASE-p7"
+VERSION_ID="13.1"
+ID=freebsd
+PRETTY_NAME="FreeBSD 13.1-RELEASE-p7"
+CPE_NAME="cpe:/o:freebsd:freebsd:13.1"
